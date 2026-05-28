@@ -163,7 +163,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                         </td>
                         <td>
                           <span className="num" style={{ fontFamily: 'monospace', color: 'var(--text-muted)', fontSize: '12px' }}>
-                            {trade.risk != null ? `₹${trade.risk.toFixed(2)}` : '—'}
+                            {trade.risk != null ? `$${trade.risk.toFixed(2)}` : '—'}
                           </span>
                         </td>
                         <td>
@@ -173,7 +173,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                             fontFamily: 'monospace',
                             color: pnlPos ? '#2ebd85' : pnlNeg ? '#df514c' : 'var(--text-muted)'
                           }}>
-                            {pnlPos ? '+' : ''}₹{trade.net_pnl.toFixed(2)}
+                            {pnlPos ? '+' : ''}${trade.net_pnl.toFixed(2)}
                           </span>
                         </td>
                         <td>

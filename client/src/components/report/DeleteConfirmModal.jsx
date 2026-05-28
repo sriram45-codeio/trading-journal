@@ -77,7 +77,7 @@ export default function DeleteConfirmModal({ trade, onConfirm, onCancel }) {
               {trade.session || 'No session'} · {trade.bias || 'No bias'}
             </span>
             <span className="num" style={{ fontSize: '14px', fontWeight: '700', color: pnlColor }}>
-              {trade.net_pnl > 0 ? '+' : ''}₹{trade.net_pnl.toFixed(2)}
+              {trade.net_pnl > 0 ? '+' : ''}${trade.net_pnl.toFixed(2)}
             </span>
           </div>
         </div>

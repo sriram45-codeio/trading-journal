@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { TrendingUp, AlertCircle } from 'lucide-react';
+import {
+  TrendingUp, AlertCircle, BarChart3, Trophy, Target,
+  TrendingDown, Activity, RefreshCw
+} from 'lucide-react';
 import api from '../../api/axios';
 import TradeForm from '../TradeForm';
 import EditModal from '../EditModal';
@@ -10,20 +13,82 @@ import TradeCard from './TradeCard';
 import TradeDetailDrawer from './TradeDetailDrawer';
 import DeleteConfirmModal from './DeleteConfirmModal';
 
-const POLL_INTERVAL = 30000; // 30 seconds
+const POLL_INTERVAL = 30000;
+
+function SummaryStatBox({ icon, label, value, sub, color, bg }) {
+  return (
+    <div style={{
+      background: bg || '#fff',
+      border: '1.5px solid #e0f2fe',
+      borderRadius: '14px',
+      padding: '18px 22px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+      flex: 1,
+      minWidth: 0,
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 1px 6px rgba(6,182,212,0.07)',
+      transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 18px rgba(6,182,212,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 6px rgba(6,182,212,0.07)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{
+          width: '32px', height: '32px', borderRadius: '9px',
+          background: color ? `${color}14` : '#e0f2fe',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ color: color || '#0891b2' }}>{icon}</span>
+        </div>
+        <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
+      </div>
+      <div style={{ fontSize: '26px', fontWeight: '800', color: color || '#0f172a', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+        {value}
+      </div>
+      {sub && <div style={{ fontSize: '11.5px', color: '#94a3b8', fontWeight: '500' }}>{sub}</div>}
+    </div>
+  );
+}
+
+function WinRateMiniRing({ rate }) {
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (rate / 100) * circ;
+  return (
+    <svg width="72" height="72" viewBox="0 0 72 72">
+      <circle cx="36" cy="36" r={r} stroke="#e0f2fe" strokeWidth="6" fill="none" />
+      <circle
+        cx="36" cy="36" r={r}
+        stroke={rate >= 50 ? '#06b6d4' : '#f43f5e'}
+        strokeWidth="6" fill="none"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform="rotate(-90 36 36)"
+        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+      />
+      <text x="36" y="36" textAnchor="middle" dominantBaseline="central"
+        style={{ fill: rate >= 50 ? '#06b6d4' : '#f43f5e', fontSize: '13px', fontWeight: '800', fontFamily: 'Inter, sans-serif' }}>
+        {rate}%
+      </text>
+    </svg>
+  );
+}
 
 export default function ReportPage() {
   const [trades, setTrades] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Filters
   const [searchText, setSearchText] = useState('');
   const [outcomeFilter, setOutcomeFilter] = useState('');
   const [sessionFilter, setSessionFilter] = useState('');
 
-  // UI State
   const [showForm, setShowForm] = useState(false);
   const [expandedTradeId, setExpandedTradeId] = useState(null);
   const [viewingTrade, setViewingTrade] = useState(null);
@@ -34,48 +99,43 @@ export default function ReportPage() {
 
   const pollRef = useRef(null);
 
-  // ─── Fetch Trades ───
-  const fetchTrades = useCallback(async (showRefreshIndicator = false) => {
+  const fetchAll = useCallback(async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) setIsRefreshing(true);
     try {
       const params = new URLSearchParams();
       if (searchText) params.append('asset', searchText);
       if (outcomeFilter) params.append('outcome', outcomeFilter);
-      const response = await api.get(`/trades?${params.toString()}`);
-      setTrades(response.data.trades);
+      const [tradesRes, analyticsRes] = await Promise.all([
+        api.get(`/trades?${params.toString()}`),
+        api.get('/analytics/summary'),
+      ]);
+      setTrades(tradesRes.data.trades);
+      setAnalytics(analyticsRes.data);
       setLastUpdated(Date.now());
     } catch (err) {
-      setToast({ message: 'Failed to load trades', type: 'error' });
+      setToast({ message: 'Failed to load report data', type: 'error' });
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
   }, [searchText, outcomeFilter]);
 
-  // Initial load + filter changes
-  useEffect(() => {
-    fetchTrades();
-  }, [fetchTrades]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Polling for real-time updates
   useEffect(() => {
-    pollRef.current = setInterval(() => {
-      fetchTrades(false);
-    }, POLL_INTERVAL);
+    pollRef.current = setInterval(() => fetchAll(false), POLL_INTERVAL);
     return () => clearInterval(pollRef.current);
-  }, [fetchTrades]);
+  }, [fetchAll]);
 
-  // ─── Client-Side Session Filtering ───
   const filteredTrades = sessionFilter
     ? trades.filter(t => t.session === sessionFilter)
     : trades;
 
-  // ─── Handlers ───
   const handleCreateTrade = async (data) => {
     try {
       await api.post('/trades', data);
       setToast({ message: 'Trade logged successfully!', type: 'success' });
-      fetchTrades(true);
+      fetchAll(true);
       setShowForm(false);
     } catch (err) {
       setToast({ message: err.response?.data?.error || 'Failed to log trade', type: 'error' });
@@ -92,8 +152,6 @@ export default function ReportPage() {
       setToast({ message: 'Failed to archive trade', type: 'error' });
     }
   };
-
-  const handleRefresh = () => fetchTrades(true);
 
   const handleExportPdf = async () => {
     setExportingPdf(true);
@@ -112,77 +170,119 @@ export default function ReportPage() {
     }
   };
 
-  const handleClearFilters = () => {
-    setSearchText('');
-    setOutcomeFilter('');
-    setSessionFilter('');
-  };
-
-  const handleToggleExpand = (id) => {
-    setExpandedTradeId(expandedTradeId === id ? null : id);
-  };
-
-  // ─── Loading State ───
+  // ─── Loading Skeleton ───
   if (loading) {
     return (
       <div style={{ padding: '24px 28px', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{
-          height: '60px',
-          borderRadius: '14px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          marginBottom: '16px',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }} />
-        <div style={{
-          height: '56px',
-          borderRadius: '14px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          marginBottom: '16px',
-          animation: 'pulse 1.5s ease-in-out infinite',
-          animationDelay: '0.1s',
-        }} />
-        {[...Array(4)].map((_, i) => (
+        {[...Array(5)].map((_, i) => (
           <div key={i} style={{
-            height: '80px',
+            height: i === 0 ? '80px' : i === 1 ? '100px' : '72px',
             borderRadius: '14px',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            marginBottom: '10px',
+            background: '#f1f5f9',
+            marginBottom: '12px',
             animation: 'pulse 1.5s ease-in-out infinite',
-            animationDelay: `${0.2 + i * 0.1}s`,
+            animationDelay: `${i * 0.1}s`,
           }} />
         ))}
       </div>
     );
   }
 
+  const pnlColor = analytics?.total_net_pnl >= 0 ? '#059669' : '#e11d48';
+  const avgWinColor = '#059669';
+
   return (
-    <div style={{ padding: '20px 28px', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Toast */}
+    <div style={{
+      padding: '20px 28px',
+      maxWidth: '1400px',
+      margin: '0 auto',
+    }}>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* Report Header */}
+      {/* ── Page Header ── */}
       <ReportHeader
         tradeCount={filteredTrades.length}
         lastUpdated={lastUpdated}
         isRefreshing={isRefreshing}
-        onRefresh={handleRefresh}
+        onRefresh={() => fetchAll(true)}
         showForm={showForm}
         onToggleForm={() => setShowForm(!showForm)}
         onExportPdf={handleExportPdf}
         exportingPdf={exportingPdf}
       />
 
-      {/* Trade Entry Form */}
+      {/* ── Analytics Summary Bar ── */}
+      {analytics && analytics.total_trades > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          marginBottom: '20px',
+          flexWrap: 'wrap',
+          alignItems: 'stretch',
+        }}>
+          {/* Win Rate Ring */}
+          <div style={{
+            background: '#fff',
+            border: '1.5px solid #e0f2fe',
+            borderRadius: '14px',
+            padding: '14px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px',
+            boxShadow: '0 1px 6px rgba(6,182,212,0.07)',
+          }}>
+            <WinRateMiniRing rate={analytics.win_rate} />
+            <span style={{ fontSize: '10.5px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Win Rate</span>
+          </div>
+
+          <SummaryStatBox
+            icon={<BarChart3 size={16} />}
+            label="Total Trades"
+            value={analytics.total_trades}
+            sub={`${analytics.total_wins}W · ${analytics.total_losses}L`}
+            color="#0891b2"
+          />
+          <SummaryStatBox
+            icon={<TrendingUp size={16} />}
+            label="Net P&L"
+            value={`${analytics.total_net_pnl >= 0 ? '+' : ''}$${analytics.total_net_pnl.toFixed(2)}`}
+            sub={analytics.total_net_pnl >= 0 ? 'Overall profit' : 'Overall loss'}
+            color={pnlColor}
+          />
+          <SummaryStatBox
+            icon={<Trophy size={16} />}
+            label="Avg Win"
+            value={`$${parseFloat(analytics.avg_win || 0).toFixed(2)}`}
+            sub="per winning trade"
+            color={avgWinColor}
+          />
+          <SummaryStatBox
+            icon={<TrendingDown size={16} />}
+            label="Avg Loss"
+            value={`$${Math.abs(parseFloat(analytics.avg_loss_pnl || 0)).toFixed(2)}`}
+            sub="per losing trade"
+            color="#e11d48"
+          />
+          <SummaryStatBox
+            icon={<Target size={16} />}
+            label="Discipline"
+            value={`${analytics.rules_followed_rate}%`}
+            sub="key level taps"
+            color="#7c3aed"
+          />
+        </div>
+      )}
+
+      {/* ── Trade Entry Form ── */}
       {showForm && (
         <div style={{ marginBottom: '16px' }} className="animate-slide-down">
           <TradeForm onSubmit={handleCreateTrade} onCancel={() => setShowForm(false)} />
         </div>
       )}
 
-      {/* Filters */}
+      {/* ── Filters ── */}
       <ReportFilters
         searchText={searchText}
         onSearchChange={setSearchText}
@@ -190,53 +290,37 @@ export default function ReportPage() {
         onOutcomeChange={setOutcomeFilter}
         sessionFilter={sessionFilter}
         onSessionChange={setSessionFilter}
-        onClear={handleClearFilters}
+        onClear={() => { setSearchText(''); setOutcomeFilter(''); setSessionFilter(''); }}
       />
 
-      {/* Trade Cards */}
+      {/* ── Trade Cards ── */}
       {filteredTrades.length === 0 ? (
         <div style={{
           textAlign: 'center',
           padding: '80px 20px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '14px',
+          background: '#fff',
+          border: '1.5px solid #e0f2fe',
+          borderRadius: '16px',
+          boxShadow: '0 1px 6px rgba(6,182,212,0.07)',
         }}>
           <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: 'rgba(243, 89, 54, 0.08)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: '64px', height: '64px', borderRadius: '50%',
+            background: '#e0f2fe',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: '16px',
           }}>
             {searchText || outcomeFilter || sessionFilter
-              ? <AlertCircle size={28} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
-              : <TrendingUp size={28} style={{ color: '#f35936', opacity: 0.6 }} />
+              ? <AlertCircle size={28} style={{ color: '#94a3b8' }} />
+              : <Activity size={28} style={{ color: '#0891b2' }} />
             }
           </div>
-          <p style={{
-            color: 'var(--text-primary)',
-            fontSize: '14px',
-            margin: '0 0 6px',
-            fontWeight: '600',
-          }}>
-            {searchText || outcomeFilter || sessionFilter
-              ? 'No trades match your filters'
-              : 'No trades logged yet'
-            }
+          <p style={{ color: '#0f172a', fontSize: '14px', margin: '0 0 6px', fontWeight: '700' }}>
+            {searchText || outcomeFilter || sessionFilter ? 'No trades match your filters' : 'No trades logged yet'}
           </p>
-          <p style={{
-            color: 'var(--text-muted)',
-            fontSize: '12.5px',
-            margin: 0,
-          }}>
+          <p style={{ color: '#94a3b8', fontSize: '12.5px', margin: 0 }}>
             {searchText || outcomeFilter || sessionFilter
-              ? 'Try adjusting your search or filter criteria'
-              : 'Click "Log Trade" to record your first trade'
-            }
+              ? 'Try adjusting your search or filters'
+              : 'Click "Log Trade" above to record your first trade'}
           </p>
         </div>
       ) : (
@@ -247,7 +331,7 @@ export default function ReportPage() {
               trade={trade}
               index={index}
               isExpanded={expandedTradeId === trade.id}
-              onToggleExpand={handleToggleExpand}
+              onToggleExpand={(id) => setExpandedTradeId(expandedTradeId === id ? null : id)}
               onView={(t) => setViewingTrade(t)}
               onEdit={(t) => setEditingTrade(t)}
               onDelete={(t) => setDeletingTrade(t)}
@@ -256,24 +340,22 @@ export default function ReportPage() {
 
           {/* Footer */}
           <div style={{
-            padding: '12px 0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            color: 'var(--text-muted)',
+            padding: '14px 0',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <span style={{ fontSize: '11px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>
               Showing {filteredTrades.length} trade{filteredTrades.length !== 1 ? 's' : ''}
               {(searchText || outcomeFilter || sessionFilter) && ` (filtered)`}
             </span>
-            <span style={{ fontSize: '11px', opacity: 0.6 }}>
-              Click any card to expand details
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#06b6d4' }} />
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Live · auto-refreshes every 30s</span>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Detail Drawer */}
+      {/* ── Drawers & Modals ── */}
       {viewingTrade && (
         <TradeDetailDrawer
           trade={viewingTrade}
@@ -282,17 +364,13 @@ export default function ReportPage() {
           onDelete={(t) => { setViewingTrade(null); setDeletingTrade(t); }}
         />
       )}
-
-      {/* Edit Modal */}
       {editingTrade && (
         <EditModal
           trade={editingTrade}
           onClose={() => setEditingTrade(null)}
-          onSuccess={() => fetchTrades(true)}
+          onSuccess={() => fetchAll(true)}
         />
       )}
-
-      {/* Delete Confirmation */}
       {deletingTrade && (
         <DeleteConfirmModal
           trade={deletingTrade}

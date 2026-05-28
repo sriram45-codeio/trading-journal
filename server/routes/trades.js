@@ -69,13 +69,13 @@ router.get('/export-pdf', async (req, res) => {
 
     drawStat('Total Trades', total_trades.toString(), boxX + 15, row1Y);
     drawStat('Win Rate', `${win_rate}%`, boxX + 130, row1Y, '#2ebd85');
-    drawStat('Net P&L', `₹${total_net_pnl}`, boxX + 245, row1Y, parseFloat(total_net_pnl) >= 0 ? '#2ebd85' : '#df514c');
+    drawStat('Net P&L', `$${total_net_pnl}`, boxX + 245, row1Y, parseFloat(total_net_pnl) >= 0 ? '#2ebd85' : '#df514c');
     drawStat('Key Level Taps', `${rules_followed_rate}%`, boxX + 360, row1Y, parseFloat(rules_followed_rate) >= 80 ? '#2ebd85' : '#df514c');
 
     drawStat('Total Wins', wins.length.toString(), boxX + 15, row2Y, '#2ebd85');
     drawStat('Total Losses', losses.length.toString(), boxX + 130, row2Y, '#df514c');
-    drawStat('Avg Win P&L', `₹${avg_win_pnl}`, boxX + 245, row2Y, '#2ebd85');
-    drawStat('Avg Loss P&L', `₹${avg_loss_pnl}`, boxX + 360, row2Y, '#df514c');
+    drawStat('Avg Win P&L', `$${avg_win_pnl}`, boxX + 245, row2Y, '#2ebd85');
+    drawStat('Avg Loss P&L', `$${avg_loss_pnl}`, boxX + 360, row2Y, '#df514c');
 
     doc.y = boxY + boxHeight + 20;
 
@@ -122,7 +122,7 @@ router.get('/export-pdf', async (req, res) => {
       
       const pnlSign = trade.net_pnl >= 0 ? '+' : '';
       const pnlColor = trade.net_pnl > 0 ? '#2ebd85' : trade.net_pnl < 0 ? '#df514c' : '#888888';
-      doc.fillColor(pnlColor).text(`P&L: ${pnlSign}₹${trade.net_pnl.toFixed(2)}`, 430, entryY + 6);
+      doc.fillColor(pnlColor).text(`P&L: ${pnlSign}$${trade.net_pnl.toFixed(2)}`, 430, entryY + 6);
 
       let currentY = entryY + headerHeight + 8;
       doc.y = currentY;
@@ -141,7 +141,7 @@ router.get('/export-pdf', async (req, res) => {
       doc.text(`CISD: ${trade.cisd || '—'}`, 45, valY + 33);
 
       doc.text(`Direction: ${trade.direction}`, 285, valY);
-      doc.text(`Risk / Exposure: ${trade.risk != null ? `₹${trade.risk}` : '—'}`, 285, valY + 11);
+      doc.text(`Risk / Exposure: ${trade.risk != null ? `$${trade.risk}` : '—'}`, 285, valY + 11);
       doc.text(`Outcome Result: ${trade.outcome}`, 285, valY + 22);
 
       doc.y = valY + 45;

@@ -50,7 +50,7 @@ function CustomTooltip({ active, payload, label }) {
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-input)', padding: '10px 14px', boxShadow: '0 4px 15px rgba(0,0,0,0.15)' }}>
         <p style={{ color: 'var(--text-muted)', fontSize: '11px', margin: '0 0 4px', fontWeight: '600' }}>{label}</p>
         <p style={{ color: val >= 0 ? '#2ebd85' : '#df514c', fontSize: '13px', fontWeight: '700', margin: 0 }} className="num">
-          {val >= 0 ? '+' : ''}₹{val.toFixed(2)}
+          {val >= 0 ? '+' : ''}${val.toFixed(2)}
         </p>
       </div>
     );
@@ -165,7 +165,7 @@ export default function Dashboard() {
 
         <StatCard
           label="Net P&L"
-          value={`${analytics.total_net_pnl >= 0 ? '+' : ''}₹${analytics.total_net_pnl.toFixed(2)}`}
+          value={`${analytics.total_net_pnl >= 0 ? '+' : ''}$${analytics.total_net_pnl.toFixed(2)}`}
           color={pnlColor}
           sub={`${analytics.total_trades} total trades`}
         />
@@ -188,7 +188,7 @@ export default function Dashboard() {
         />
         <StatCard
           label="Avg Win"
-          value={analytics.avg_win != null ? `₹${parseFloat(analytics.avg_win).toFixed(2)}` : '—'}
+          value={analytics.avg_win != null ? `$${parseFloat(analytics.avg_win).toFixed(2)}` : '—'}
           color="#2ebd85"
           sub="per winning trade"
         />
@@ -227,7 +227,7 @@ export default function Dashboard() {
               <YAxis
                 stroke="var(--border-color)"
                 tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                tickFormatter={(v) => `₹${v}`}
+                tickFormatter={(v) => `$${v}`}
                 axisLine={false}
                 tickLine={false}
                 width={64}

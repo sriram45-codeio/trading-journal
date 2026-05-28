@@ -81,7 +81,7 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
                 color: pnlColor,
                 lineHeight: 1,
               }}>
-                {pnlPos ? '+' : ''}₹{trade.net_pnl.toFixed(2)}
+                {pnlPos ? '+' : ''}${trade.net_pnl.toFixed(2)}
               </span>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -103,7 +103,7 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
             <QuickStat icon={<Calendar size={12} />} label="Date" value={trade.trade_date} />
             <QuickStat icon={<Clock size={12} />} label="Time" value={trade.trade_time || '—'} />
             <QuickStat icon={<Activity size={12} />} label="Session" value={trade.session || '—'} />
-            <QuickStat icon={<TrendingUp size={12} />} label="Risk" value={trade.risk != null ? `₹${trade.risk.toFixed(0)}` : '—'} />
+            <QuickStat icon={<TrendingUp size={12} />} label="Risk" value={trade.risk != null ? `$${trade.risk.toFixed(0)}` : '—'} />
           </div>
         </div>
 
