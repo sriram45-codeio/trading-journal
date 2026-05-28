@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import AuthScreen from './components/AuthScreen';
 import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
-import ReportPage from './components/report/ReportPage';
+import TradeLog from './components/TradeLog';
+import TradingReports from './components/report/TradingReports';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -40,18 +42,37 @@ export default function App() {
   }
 
   return (
-    <div className={theme === 'light' ? 'light' : ''} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', overflow: 'hidden' }}>
-      <Header 
+    <div 
+      className={theme === 'light' ? 'light' : ''} 
+      style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        background: 'var(--bg-primary)', 
+        overflow: 'hidden' 
+      }}
+    >
+      {/* Premium Left Sidebar */}
+      <Sidebar 
         activePage={activePage} 
         setActivePage={setActivePage} 
         onLogout={handleLogout} 
-        theme={theme}
-        toggleTheme={toggleTheme}
       />
-      <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)' }}>
-        {activePage === 'dashboard' && <Dashboard />}
-        {activePage === 'trades' && <ReportPage />}
-      </main>
+
+      {/* Main Content Pane */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Header 
+          activePage={activePage} 
+          setActivePage={setActivePage} 
+          onLogout={handleLogout} 
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
+        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)' }}>
+          {activePage === 'dashboard' && <Dashboard />}
+          {activePage === 'trades' && <TradeLog />}
+          {activePage === 'reports' && <TradingReports />}
+        </main>
+      </div>
     </div>
   );
 }

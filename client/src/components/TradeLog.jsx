@@ -44,45 +44,57 @@ export default function TradeLog() {
   };
 
   const handleDeleteTrade = async (trade) => {
-    if (!window.confirm(`Delete trade on ${trade.trade_date} for ${trade.asset_pair}?\nNet P&L: ₹${trade.net_pnl.toFixed(2)}\n\nThis cannot be undone.`)) return;
+    if (!window.confirm(`Archive trade on ${trade.trade_date}?\nNet P&L: $${trade.net_pnl.toFixed(2)}\n\nThis cannot be undone.`)) return;
     try {
       await api.delete(`/trades/${trade.id}`);
       setTrades(prev => prev.filter(t => t.id !== trade.id));
-      setToast({ message: 'Trade deleted', type: 'success' });
+      setToast({ message: 'Trade archived', type: 'success' });
     } catch (err) {
-      setToast({ message: 'Failed to delete trade', type: 'error' });
+      setToast({ message: 'Failed to archive trade', type: 'error' });
     }
   };
 
   return (
-    <div style={{ padding: '20px 24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '24px 28px', maxWidth: '1400px', margin: '0 auto' }}>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      {/* ── Page Header ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: '20px',
+      }}>
         <div>
-          <h1 style={{ fontSize: '16px', fontWeight: '600', color: '#e5e7eb', margin: 0 }}>Trade Log</h1>
-          <p style={{ fontSize: '11px', color: '#6b7280', margin: '3px 0 0' }}>
-            {trades.length} trade{trades.length !== 1 ? 's' : ''} recorded
+          <h1 style={{
+            fontSize: '18px', fontWeight: '800', color: '#f5f3ff', margin: 0,
+            letterSpacing: '-0.3px',
+            background: 'linear-gradient(135deg, #c084fc 0%, #8b5cf6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
+            Trade Log
+          </h1>
+          <p style={{ fontSize: '11.5px', color: '#8b92b6', margin: '4px 0 0', fontWeight: '500' }}>
+            {trades.length} trade{trades.length !== 1 ? 's' : ''} recorded · {new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
           className={`kite-btn ${showForm ? 'kite-btn-ghost' : 'kite-btn-blue'}`}
           id="btn-toggle-form"
+          style={{ padding: '8px 18px' }}
         >
           {showForm ? <><ChevronUp size={14} /> Hide Form</> : <><Plus size={14} /> Log Trade</>}
         </button>
       </div>
 
-      {/* Trade Entry Form */}
+      {/* ── Trade Entry Form ── */}
       {showForm && (
         <div style={{ marginBottom: '16px' }} className="animate-slide-down">
           <TradeForm onSubmit={handleCreateTrade} onCancel={() => setShowForm(false)} />
         </div>
       )}
 
-      {/* Trade Table */}
+      {/* ── Trade Table ── */}
       <TradeTable
         trades={trades}
         loading={loading}
@@ -97,7 +109,7 @@ export default function TradeLog() {
         onDelete={handleDeleteTrade}
       />
 
-      {/* Edit Modal */}
+      {/* ── Edit Modal ── */}
       {editingTrade && (
         <EditModal
           trade={editingTrade}

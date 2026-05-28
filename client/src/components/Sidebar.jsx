@@ -1,99 +1,257 @@
 import React from 'react';
-import { TrendingUp, LayoutDashboard, List, LogOut, User } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, List, LogOut, User, BarChart3 } from 'lucide-react';
 
 export default function Sidebar({ activePage, setActivePage, onLogout }) {
   const userEmail = localStorage.getItem('tj_email') || 'user@example.com';
 
+  const getLinkStyle = (page) => {
+    const isActive = activePage === page;
+    return {
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '12px 16px',
+      borderRadius: '10px',
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'all 0.25s ease',
+      fontSize: '13.5px',
+      fontWeight: '600',
+      textAlign: 'left',
+      fontFamily: 'inherit',
+      background: isActive ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+      color: isActive ? '#c084fc' : '#94a3b8',
+      boxShadow: isActive ? 'inset 0 0 12px rgba(139, 92, 246, 0.1)' : 'none',
+      borderLeft: isActive ? '3.5px solid #8b5cf6' : '3.5px solid transparent',
+    };
+  };
+
   return (
     <>
-      <aside className="hidden md:flex bg-zinc-900 border-r border-zinc-700/50 w-64 flex-col h-full">
-        <div className="p-6 border-b border-zinc-700/50">
+      {/* Desktop Sidebar */}
+      <aside 
+        className="hidden md:flex w-64 flex-col h-full"
+        style={{
+          background: 'var(--bg-secondary)',
+          borderRight: '1.5px solid var(--border-color)',
+        }}
+      >
+        <div 
+          className="p-6" 
+          style={{ borderBottom: '1.5px solid var(--border-color)' }}
+        >
           <div className="flex items-center gap-3">
-            <div className="bg-indigo-600/20 p-2 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-indigo-400" />
+            <div 
+              style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                padding: '8px',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.3)'
+              }}
+            >
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-white font-bold text-lg">Trading Journal</h1>
-              <p className="text-zinc-500 text-xs">Professional Trading</p>
+              <h1 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.3px' }}>
+                TRADING JOURNAL
+              </h1>
+              <p style={{ fontSize: '10.5px', color: '#8b92b6', margin: '2px 0 0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Premium Suite
+              </p>
             </div>
           </div>
         </div>
 
         <nav className="flex-1 p-4">
-          <ul className="space-y-2">
+          <ul className="space-y-2" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             <li>
               <button
                 onClick={() => setActivePage('dashboard')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  activePage === 'dashboard'
-                    ? 'bg-indigo-600/20 text-indigo-400 border-r-2 border-indigo-500'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                }`}
+                style={getLinkStyle('dashboard')}
+                id="sidebar-tab-dashboard"
+                onMouseEnter={e => {
+                  if (activePage !== 'dashboard') {
+                    e.currentTarget.style.color = '#f5f3ff';
+                    e.currentTarget.style.background = 'var(--bg-row-hover)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (activePage !== 'dashboard') {
+                    e.currentTarget.style.color = '#94a3b8';
+                    e.currentTarget.style.background = 'transparent';
+                  }
+                }}
               >
-                <LayoutDashboard className="w-5 h-5" />
-                <span className="font-medium">Dashboard</span>
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Dashboard</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => setActivePage('trades')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  activePage === 'trades'
-                    ? 'bg-indigo-600/20 text-indigo-400 border-r-2 border-indigo-500'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                }`}
+                style={getLinkStyle('trades')}
+                id="sidebar-tab-trades"
+                onMouseEnter={e => {
+                  if (activePage !== 'trades') {
+                    e.currentTarget.style.color = '#f5f3ff';
+                    e.currentTarget.style.background = 'var(--bg-row-hover)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (activePage !== 'trades') {
+                    e.currentTarget.style.color = '#94a3b8';
+                    e.currentTarget.style.background = 'transparent';
+                  }
+                }}
               >
-                <List className="w-5 h-5" />
-                <span className="font-medium">Trade Log</span>
+                <List className="w-4 h-4" />
+                <span>Trade Log</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setActivePage('reports')}
+                style={getLinkStyle('reports')}
+                id="sidebar-tab-reports"
+                onMouseEnter={e => {
+                  if (activePage !== 'reports') {
+                    e.currentTarget.style.color = '#f5f3ff';
+                    e.currentTarget.style.background = 'var(--bg-row-hover)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (activePage !== 'reports') {
+                    e.currentTarget.style.color = '#94a3b8';
+                    e.currentTarget.style.background = 'transparent';
+                  }
+                }}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Trading Reports</span>
               </button>
             </li>
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-zinc-700/50">
-          <div className="flex items-center gap-3 mb-4 px-4 py-2">
-            <div className="bg-zinc-800 p-2 rounded-full">
-              <User className="w-4 h-4 text-zinc-400" />
+        <div className="p-4" style={{ borderTop: '1.5px solid var(--border-color)' }}>
+          <div 
+            className="flex items-center gap-3 mb-4 px-4 py-2"
+            style={{
+              background: 'rgba(139, 92, 246, 0.04)',
+              border: '1px solid rgba(139, 92, 246, 0.08)',
+              borderRadius: '10px'
+            }}
+          >
+            <div 
+              style={{
+                background: 'rgba(139, 92, 246, 0.15)',
+                padding: '6px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <User className="w-4 h-4 text-purple-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-zinc-400 text-sm truncate">{userEmail}</p>
+              <p style={{ margin: 0, fontSize: '12px', color: '#cbd5e1', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {userEmail}
+              </p>
             </div>
           </div>
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-rose-400 hover:text-rose-300 hover:bg-rose-900/20 rounded-lg transition-all"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              border: '1.5px solid rgba(244, 63, 94, 0.15)',
+              background: 'rgba(244, 63, 94, 0.03)',
+              color: '#f43f5e',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(244, 63, 94, 0.08)';
+              e.currentTarget.style.borderColor = 'rgba(244, 63, 94, 0.3)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(244, 63, 94, 0.03)';
+              e.currentTarget.style.borderColor = 'rgba(244, 63, 94, 0.15)';
+            }}
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Logout</span>
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-700 flex justify-around py-3 z-40">
+      {/* Mobile Bottom Navigation */}
+      <div 
+        className="md:hidden fixed bottom-0 left-0 right-0 flex justify-around py-3 z-40"
+        style={{
+          background: 'var(--bg-secondary)',
+          borderTop: '1.5px solid var(--border-color)',
+        }}
+      >
         <button
           onClick={() => setActivePage('dashboard')}
-          className={`flex flex-col items-center gap-1 ${
-            activePage === 'dashboard' ? 'text-indigo-400' : 'text-zinc-400'
-          }`}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+            color: activePage === 'dashboard' ? '#c084fc' : '#94a3b8',
+            transition: 'color 0.2s', fontFamily: 'inherit',
+          }}
         >
-          <LayoutDashboard className="w-6 h-6" />
-          <span className="text-xs">Dashboard</span>
+          <LayoutDashboard className="w-5 h-5" />
+          <span style={{ fontSize: '10px', fontWeight: '600' }}>Dashboard</span>
         </button>
         <button
           onClick={() => setActivePage('trades')}
-          className={`flex flex-col items-center gap-1 ${
-            activePage === 'trades' ? 'text-indigo-400' : 'text-zinc-400'
-          }`}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+            color: activePage === 'trades' ? '#c084fc' : '#94a3b8',
+            transition: 'color 0.2s', fontFamily: 'inherit',
+          }}
         >
-          <List className="w-6 h-6" />
-          <span className="text-xs">Trades</span>
+          <List className="w-5 h-5" />
+          <span style={{ fontSize: '10px', fontWeight: '600' }}>Trades</span>
+        </button>
+        <button
+          onClick={() => setActivePage('reports')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+            color: activePage === 'reports' ? '#c084fc' : '#94a3b8',
+            transition: 'color 0.2s', fontFamily: 'inherit',
+          }}
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span style={{ fontSize: '10px', fontWeight: '600' }}>Reports</span>
         </button>
         <button
           onClick={onLogout}
-          className="flex flex-col items-center gap-1 text-rose-400"
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+            color: '#f43f5e',
+            transition: 'color 0.2s', fontFamily: 'inherit',
+          }}
         >
-          <LogOut className="w-6 h-6" />
-          <span className="text-xs">Logout</span>
+          <LogOut className="w-5 h-5" />
+          <span style={{ fontSize: '10px', fontWeight: '600' }}>Logout</span>
         </button>
       </div>
     </>
