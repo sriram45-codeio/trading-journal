@@ -30,7 +30,22 @@ router.get('/export-pdf', async (req, res) => {
     const rules_followed_count = trades.filter(t => t.key_level_tap === 'YES').length;
     const rules_followed_rate = total_trades > 0 ? ((rules_followed_count / total_trades) * 100).toFixed(2) : '0.00';
 
-    const doc = new PDFDocument({ size: 'A4', margins: { top: 40, bottom: 40, left: 40, right: 40 }, bufferPages: true });
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 40, bottom: 40, left: 40, right: 40 },
+      bufferPages: true,
+      autoFirstPage: false
+    });
+
+    // Automatically draw dark background on every page
+    doc.on('pageAdded', () => {
+      doc.save();
+      doc.rect(0, 0, doc.page.width, doc.page.height).fillColor('#191919').fill();
+      doc.restore();
+    });
+
+    // Add initial page
+    doc.addPage();
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="trading-journal-report.pdf"');
@@ -117,8 +132,8 @@ router.get('/export-pdf', async (req, res) => {
       doc.font('Helvetica').fontSize(8.5);
       doc.text(`Date: ${trade.trade_date} ${trade.trade_time || ''}`, 120, entryY + 6);
       doc.text(`Session: ${trade.session || '—'}`, 260, entryY + 6);
-      doc.font('Helvetica-Bold');
-      doc.text(`${trade.direction}`, 360, entryY + 6, { color: sideColor });
+      doc.font('Helvetica-Bold').fillColor(sideColor);
+      doc.text(`${trade.direction}`, 360, entryY + 6);
       
       const pnlSign = trade.net_pnl >= 0 ? '+' : '';
       const pnlColor = trade.net_pnl > 0 ? '#2ebd85' : trade.net_pnl < 0 ? '#df514c' : '#888888';
@@ -171,8 +186,6 @@ router.get('/export-pdf', async (req, res) => {
     const pages = doc.bufferedPageRange();
     for (let i = 0; i < pages.count; i++) {
       doc.switchToPage(i);
-      // Dark background accent for PDF
-      doc.rect(0, 0, doc.page.width, doc.page.height).fillColor('#191919').fill('destination-over');
       
       doc.fillColor('#888888').font('Helvetica').fontSize(8);
       doc.text(
@@ -206,15 +219,23 @@ router.get('/:id/export-pdf', async (req, res) => {
     const doc = new PDFDocument({
       size: 'A4',
       margins: { top: 40, bottom: 40, left: 40, right: 40 },
-      bufferPages: true
+      bufferPages: true,
+      autoFirstPage: false
     });
+
+    // Automatically draw dark background on every page
+    doc.on('pageAdded', () => {
+      doc.save();
+      doc.rect(0, 0, doc.page.width, doc.page.height).fillColor('#191919').fill();
+      doc.restore();
+    });
+
+    // Add initial page
+    doc.addPage();
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="trade-${tradeId}-report.pdf"`);
     doc.pipe(res);
-
-    // 1. Draw premium dark background
-    doc.rect(0, 0, doc.page.width, doc.page.height).fillColor('#191919').fill();
 
     // 2. Header Branding
     doc.font('Helvetica-Bold').fontSize(20).fillColor('#06b6d4').text('INDIVIDUAL TRADE RUNSHEET', { align: 'center' });
@@ -294,7 +315,7 @@ router.get('/:id/export-pdf', async (req, res) => {
       pnlBannerY + 16
     );
     doc.fillColor(isWin ? '#2ebd85' : '#df514c').font('Helvetica-Bold').fontSize(12).text(
-      trade.outcome === 'WIN' ? '🏆 WINNING TRADE' : '⚠️ LOSS ENCOUNTERED',
+      trade.outcome === 'WIN' ? 'WINNING TRADE' : 'LOSS ENCOUNTERED',
       380,
       pnlBannerY + 21
     );
@@ -331,14 +352,18 @@ router.get('/:id/export-pdf', async (req, res) => {
     drawNarrativeBlock('PART B: PSYCHOLOGY (EMOTION / MINDSET NOTES)', trade.emotion_mindset, '#7c3aed', '#7c3aed');
     drawNarrativeBlock('PART C: MISTAKE & ACTIONABLE IMPROVEMENTS', trade.mistake_improve, '#df514c', '#df514c');
 
-    // Footer Page Tag
-    doc.fillColor('#888888').font('Helvetica').fontSize(8);
-    doc.text(
-      'Page 1 of 1  |  Zerodha Kite Premium Runsheet  |  Confidential Trading Journal',
-      40,
-      doc.page.height - 25,
-      { align: 'center', width: doc.page.width - 80 }
-    );
+    // Footer Page Tag on all pages
+    const pages = doc.bufferedPageRange();
+    for (let i = 0; i < pages.count; i++) {
+      doc.switchToPage(i);
+      doc.fillColor('#888888').font('Helvetica').fontSize(8);
+      doc.text(
+        `Page ${i + 1} of ${pages.count}  |  Zerodha Kite Premium Runsheet  |  Confidential Trading Journal`,
+        40,
+        doc.page.height - 25,
+        { align: 'center', width: doc.page.width - 80 }
+      );
+    }
 
     doc.end();
   } catch (error) {
