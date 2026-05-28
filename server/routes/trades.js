@@ -187,6 +187,10 @@ router.get('/export-pdf', async (req, res) => {
     for (let i = 0; i < pages.count; i++) {
       doc.switchToPage(i);
       
+      // Temporarily disable bottom margin wrap to prevent extra page creation
+      const oldBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      
       doc.fillColor('#888888').font('Helvetica').fontSize(8);
       doc.text(
         `Page ${i + 1} of ${pages.count}  |  Zerodha Kite Styled Report`,
@@ -194,6 +198,8 @@ router.get('/export-pdf', async (req, res) => {
         doc.page.height - 25,
         { align: 'center', width: doc.page.width - 80 }
       );
+      
+      doc.page.margins.bottom = oldBottomMargin;
     }
 
     doc.end();
@@ -356,6 +362,11 @@ router.get('/:id/export-pdf', async (req, res) => {
     const pages = doc.bufferedPageRange();
     for (let i = 0; i < pages.count; i++) {
       doc.switchToPage(i);
+      
+      // Temporarily disable bottom margin wrap to prevent extra page creation
+      const oldBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      
       doc.fillColor('#888888').font('Helvetica').fontSize(8);
       doc.text(
         `Page ${i + 1} of ${pages.count}  |  Zerodha Kite Premium Runsheet  |  Confidential Trading Journal`,
@@ -363,6 +374,8 @@ router.get('/:id/export-pdf', async (req, res) => {
         doc.page.height - 25,
         { align: 'center', width: doc.page.width - 80 }
       );
+      
+      doc.page.margins.bottom = oldBottomMargin;
     }
 
     doc.end();
