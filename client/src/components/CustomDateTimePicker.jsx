@@ -209,82 +209,38 @@ export function CustomDatePicker({ value, onChange, error, accentColor = '#f3593
 }
 
 export function CustomTimePicker({ value, onChange, error, accentColor = '#f35936' }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef();
-
-  useClickOutside(containerRef, () => setIsOpen(false));
-
-  // Generate digital clock times every 15 mins for rapid selection
-  const times = [];
-  for (let h = 0; h < 24; h++) {
-    const formattedHour = String(h).padStart(2, '0');
-    times.push(`${formattedHour}:00`);
-    times.push(`${formattedHour}:15`);
-    times.push(`${formattedHour}:30`);
-    times.push(`${formattedHour}:45`);
-  }
-
-  const handleSelectTime = (selectedTime) => {
-    onChange(selectedTime);
-    setIsOpen(false);
-  };
-
   return (
-    <div ref={containerRef} className="relative w-full">
-      <div 
-        onClick={() => setIsOpen(!isOpen)} 
-        className={`kite-input flex items-center justify-between cursor-pointer ${error ? 'error' : ''}`}
-        style={{ paddingRight: '12px' }}
-      >
-        <span className={value ? 'text-primary' : 'text-muted'} style={{ fontSize: '13px' }}>
-          {value || '--:--'}
-        </span>
-        <Clock size={14} className="text-muted" style={{ color: value ? accentColor : 'var(--text-muted)' }} />
-      </div>
-
-      {isOpen && (
-        <div 
-          className="absolute left-0 mt-2 p-2 kite-card animate-slide-down z-50"
-          style={{ 
-            width: '180px', 
-            maxHeight: '240px',
-            overflowY: 'auto',
-            background: 'var(--bg-card)', 
-            borderColor: 'var(--border-color)',
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.2)'
-          }}
-        >
-          {/* Quick Preset Sections */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {times.map((t) => {
-              const isSelected = value === t;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => handleSelectTime(t)}
-                  className="w-full text-left py-1.5 px-3 rounded text-xs transition-colors"
-                  style={{
-                    background: isSelected ? accentColor : 'transparent',
-                    color: isSelected ? '#fff' : 'var(--text-primary)',
-                    border: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) e.currentTarget.style.background = 'var(--bg-row-hover)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  {t}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+    <div className="relative w-full">
+      <input
+        type="time"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        id="input-trade-time-native"
+        className={`kite-input ${error ? 'error' : ''}`}
+        style={{
+          width: '100%',
+          height: '38px',
+          boxSizing: 'border-box',
+          padding: '8px 12px',
+          fontSize: '13px',
+          color: value ? 'var(--text-primary)' : 'var(--text-muted)',
+          background: 'var(--bg-input)',
+          border: '1.5px solid var(--border-color)',
+          borderRadius: 'var(--radius-input)',
+          outline: 'none',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          transition: 'border-color 0.15s ease',
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = accentColor;
+          e.target.style.boxShadow = `0 0 0 3px ${accentColor}18`;
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = 'var(--border-color)';
+          e.target.style.boxShadow = 'none';
+        }}
+      />
     </div>
   );
 }

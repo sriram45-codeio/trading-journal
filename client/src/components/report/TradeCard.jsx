@@ -1,7 +1,23 @@
 import React from 'react';
-import { Eye, Pencil, Trash2, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Eye, Pencil, Trash2, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight, Download } from 'lucide-react';
+import api from '../../api/axios';
 
 export default function TradeCard({ trade, index, isExpanded, onToggleExpand, onView, onEdit, onDelete }) {
+  const handleDownloadPdf = async (e) => {
+    e.stopPropagation();
+    try {
+      const response = await api.get(`/trades/${trade.id}/export-pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trade-${trade.id}-report.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download individual trade PDF:', err);
+    }
+  };
+
   const isWin = trade.outcome === 'WIN';
   const pnlPos = trade.net_pnl > 0;
   const pnlNeg = trade.net_pnl < 0;
@@ -138,6 +154,9 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
           <div style={{ display: 'flex', gap: '2px' }} onClick={e => e.stopPropagation()}>
             <ActionBtn onClick={() => onView(trade)} title="View details" id={`btn-view-${trade.id}`} color="#0891b2">
               <Eye size={14} />
+            </ActionBtn>
+            <ActionBtn onClick={handleDownloadPdf} title="Download PDF Runsheet" id={`btn-pdf-${trade.id}`} color="#f35936">
+              <Download size={14} />
             </ActionBtn>
             <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="#7c3aed">
               <Pencil size={14} />

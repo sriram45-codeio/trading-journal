@@ -1,7 +1,21 @@
 import React, { useEffect } from 'react';
-import { X, BookOpen, Brain, ShieldAlert, Pencil, Trash2, Calendar, Clock, TrendingUp, BarChart3, Target, Activity } from 'lucide-react';
+import { X, BookOpen, Brain, ShieldAlert, Pencil, Trash2, Calendar, Clock, TrendingUp, BarChart3, Target, Activity, Download } from 'lucide-react';
+import api from '../../api/axios';
 
 export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) {
+  const handleDownloadPdf = async () => {
+    try {
+      const response = await api.get(`/trades/${trade.id}/export-pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trade-${trade.id}-report.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download individual trade PDF:', err);
+    }
+  };
   useEffect(() => {
     const handleEscape = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEscape);
@@ -188,6 +202,15 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
           >
             <Pencil size={13} />
             Edit Trade
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            className="kite-btn kite-btn-orange"
+            style={{ padding: '10px 16px' }}
+            id="drawer-btn-pdf"
+          >
+            <Download size={13} />
+            PDF
           </button>
           <button
             onClick={() => { onDelete(trade); onClose(); }}

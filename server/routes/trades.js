@@ -190,4 +190,161 @@ router.get('/export-pdf', async (req, res) => {
   }
 });
 
+router.get('/:id/export-pdf', async (req, res) => {
+  try {
+    const tradeId = req.params.id;
+    const tradeRes = await db.query(
+      'SELECT * FROM trades WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+      [tradeId, req.user.id]
+    );
+    const trade = tradeRes.rows[0];
+
+    if (!trade) {
+      return res.status(404).json({ error: 'Trade not found' });
+    }
+
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 40, bottom: 40, left: 40, right: 40 },
+      bufferPages: true
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="trade-${tradeId}-report.pdf"`);
+    doc.pipe(res);
+
+    // 1. Draw premium dark background
+    doc.rect(0, 0, doc.page.width, doc.page.height).fillColor('#191919').fill();
+
+    // 2. Header Branding
+    doc.font('Helvetica-Bold').fontSize(20).fillColor('#06b6d4').text('INDIVIDUAL TRADE RUNSHEET', { align: 'center' });
+    doc.moveDown(0.2);
+    doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).strokeColor('#2D2D2D').lineWidth(1.5).stroke();
+    doc.moveDown(0.4);
+    
+    // Sub-header details
+    doc.font('Helvetica').fontSize(9).fillColor('#888888').text(
+      `Generated: ${new Date().toLocaleDateString()}  |  Account: ${req.user.email}  |  Trade Reference ID: #${trade.id}`,
+      { align: 'center' }
+    );
+    doc.moveDown(1.5);
+
+    // 3. Two-Column Stats Block
+    const startY = doc.y;
+    const boxWidth = 245;
+    const boxHeight = 135;
+
+    // LEFT COLUMN: Checklist & Verification
+    doc.roundedRect(40, startY, boxWidth, boxHeight, 6)
+       .fillColor('#1E293B') // slate-800
+       .strokeColor('#334155') // slate-700
+       .lineWidth(1)
+       .fillAndStroke();
+
+    doc.fillColor('#06b6d4').font('Helvetica-Bold').fontSize(11).text('Checklist Verification', 55, startY + 12);
+    
+    const drawItem = (label, value, isAccented = false, accentVal = '', valColor = '#FFFFFF', xOff = 55, yOff = 0) => {
+      doc.fillColor('#888888').font('Helvetica').fontSize(8.5).text(label, xOff, yOff);
+      doc.fillColor(valColor).font('Helvetica-Bold').fontSize(9.5).text(value, xOff + 95, yOff);
+    };
+
+    drawItem('Trading Session:', trade.session || '—', false, '', '#FFFFFF', 55, startY + 36);
+    drawItem('Market Bias:', trade.bias || '—', false, '', trade.bias === 'Bullish' ? '#2ebd85' : trade.bias === 'Bearish' ? '#df514c' : '#FFFFFF', 55, startY + 54);
+    drawItem('Key Level:', trade.key_level || '—', false, '', '#FFFFFF', 55, startY + 72);
+    drawItem('Key Level Tap:', trade.key_level_tap || '—', false, '', trade.key_level_tap === 'YES' ? '#2ebd85' : '#df514c', 55, startY + 90);
+    drawItem('CISD Formed:', trade.cisd || '—', false, '', trade.cisd === 'YES' ? '#2ebd85' : '#df514c', 55, startY + 108);
+
+    // RIGHT COLUMN: Financials & Outcome
+    doc.roundedRect(305, startY, boxWidth, boxHeight, 6)
+       .fillColor('#1E293B')
+       .strokeColor('#334155')
+       .lineWidth(1)
+       .fillAndStroke();
+
+    doc.fillColor('#7c3aed').font('Helvetica-Bold').fontSize(11).text('Financials & Outcome', 320, startY + 12);
+
+    const isWin = trade.outcome === 'WIN';
+    const sideColor = trade.direction === 'BUY' ? '#4184f3' : '#df514c';
+    const pnlColor = trade.net_pnl > 0 ? '#2ebd85' : trade.net_pnl < 0 ? '#df514c' : '#888888';
+    const pnlSign = trade.net_pnl >= 0 ? '+' : '';
+
+    drawItem('Trade Date:', trade.trade_date, false, '', '#FFFFFF', 320, startY + 36);
+    drawItem('Trade Time (IST):', trade.trade_time || '—', false, '', '#FFFFFF', 320, startY + 54);
+    drawItem('Order Direction:', trade.direction, false, '', sideColor, 320, startY + 72);
+    drawItem('Risk Exposure:', trade.risk != null ? `$${trade.risk.toFixed(2)}` : '—', false, '', '#FFFFFF', 320, startY + 90);
+    drawItem('Outcome Result:', trade.outcome, false, '', isWin ? '#2ebd85' : '#df514c', 320, startY + 108);
+
+    doc.y = startY + boxHeight + 20;
+
+    // 4. Hero P&L Banner
+    const pnlBannerY = doc.y;
+    doc.roundedRect(40, pnlBannerY, doc.page.width - 80, 54, 6)
+       .fillColor(isWin ? '#1b2c24' : '#2d1b1a')
+       .strokeColor(isWin ? '#233d32' : '#3d2322')
+       .lineWidth(1)
+       .fillAndStroke();
+
+    // Accent line on left of P&L
+    doc.rect(40, pnlBannerY, 4, 54).fill(isWin ? '#2ebd85' : '#df514c');
+
+    doc.fillColor('#FFFFFF').font('Helvetica').fontSize(9.5).text('NET PROFIT / LOSS:', 60, pnlBannerY + 22);
+    doc.fillColor(pnlColor).font('Helvetica-Bold').fontSize(20).text(
+      `${pnlSign}$${trade.net_pnl.toFixed(2)}`,
+      200,
+      pnlBannerY + 16
+    );
+    doc.fillColor(isWin ? '#2ebd85' : '#df514c').font('Helvetica-Bold').fontSize(12).text(
+      trade.outcome === 'WIN' ? '🏆 WINNING TRADE' : '⚠️ LOSS ENCOUNTERED',
+      380,
+      pnlBannerY + 21
+    );
+
+    doc.y = pnlBannerY + 54 + 20;
+
+    // 5. Narrative blocks
+    const drawNarrativeBlock = (title, content, headerColor, iconColor) => {
+      const boxW = doc.page.width - 80;
+      doc.font('Helvetica-Bold').fontSize(10.5).fillColor(headerColor).text(title);
+      doc.moveDown(0.2);
+      
+      const textHeight = content ? doc.heightOfString(content, { width: boxW - 20, align: 'justify' }) : 14;
+      const cardH = Math.max(textHeight + 20, 42);
+
+      const blockY = doc.y;
+      doc.roundedRect(40, blockY, boxW, cardH, 6)
+         .fillColor('#0F172A') // slate-900
+         .strokeColor('#1E293B')
+         .lineWidth(1)
+         .fillAndStroke();
+
+      doc.fillColor('#CCCCCC').font('Helvetica').fontSize(9);
+      doc.text(
+        content || 'No journal narrative recorded for this section.',
+        50,
+        blockY + 10,
+        { width: boxW - 20, align: 'justify', lineHeight: 1.3 }
+      );
+      doc.y = blockY + cardH + 16;
+    };
+
+    drawNarrativeBlock('PART A: SETUP LOGIC (WHY THIS TRADE?)', trade.why_this_trade, '#06b6d4', '#06b6d4');
+    drawNarrativeBlock('PART B: PSYCHOLOGY (EMOTION / MINDSET NOTES)', trade.emotion_mindset, '#7c3aed', '#7c3aed');
+    drawNarrativeBlock('PART C: MISTAKE & ACTIONABLE IMPROVEMENTS', trade.mistake_improve, '#df514c', '#df514c');
+
+    // Footer Page Tag
+    doc.fillColor('#888888').font('Helvetica').fontSize(8);
+    doc.text(
+      'Page 1 of 1  |  Zerodha Kite Premium Runsheet  |  Confidential Trading Journal',
+      40,
+      doc.page.height - 25,
+      { align: 'center', width: doc.page.width - 80 }
+    );
+
+    doc.end();
+  } catch (error) {
+    console.error('PDF error for single trade:', error);
+    res.status(500).json({ error: 'Failed to generate single trade PDF' });
+  }
+});
+
 module.exports = router;
