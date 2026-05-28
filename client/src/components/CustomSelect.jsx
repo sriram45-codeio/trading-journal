@@ -45,7 +45,7 @@ export default function CustomSelect({ name, value, onChange, options, id, class
         style={{
           paddingRight: '12px',
           background: 'var(--bg-input)',
-          borderColor: isOpen ? '#f35936' : 'var(--border-color)',
+          borderColor: isOpen ? 'var(--accent-color)' : 'var(--border-color)',
           color: 'var(--text-primary)',
           outline: 'none'
         }}
@@ -84,8 +84,8 @@ export default function CustomSelect({ name, value, onChange, options, id, class
                   onClick={() => handleSelectOption(opt.value)}
                   className="w-full text-left py-2 px-3 rounded text-xs transition-colors flex items-center gap-2"
                   style={{
-                    background: isSelected ? 'rgba(243, 89, 54, 0.1)' : 'transparent',
-                    color: isSelected ? '#f35936' : 'var(--text-primary)',
+                    background: isSelected ? 'rgba(255, 87, 34, 0.08)' : 'transparent',
+                    color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
                     border: 'none',
                     fontWeight: isSelected ? '600' : '400',
                     cursor: 'pointer'

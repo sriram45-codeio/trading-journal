@@ -10,7 +10,7 @@ export default function DeleteConfirmModal({ trade, onConfirm, onCancel }) {
 
   if (!trade) return null;
 
-  const pnlColor = trade.net_pnl > 0 ? '#2ebd85' : trade.net_pnl < 0 ? '#df514c' : 'var(--text-muted)';
+  const pnlColor = trade.net_pnl > 0 ? 'var(--win-green)' : trade.net_pnl < 0 ? 'var(--loss-red)' : 'var(--text-muted)';
 
   return (
     <div
@@ -24,14 +24,14 @@ export default function DeleteConfirmModal({ trade, onConfirm, onCancel }) {
             width: '56px',
             height: '56px',
             borderRadius: '50%',
-            background: 'rgba(243, 89, 54, 0.1)',
-            border: '2px solid rgba(243, 89, 54, 0.25)',
+            background: 'rgba(255, 87, 34, 0.08)',
+            border: '2px solid rgba(255, 87, 34, 0.25)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             animation: 'shakeWarning 0.5s ease-in-out',
           }}>
-            <AlertTriangle size={26} style={{ color: '#f35936' }} />
+            <AlertTriangle size={26} style={{ color: 'var(--accent-color)' }} />
           </div>
         </div>
 
@@ -99,7 +99,7 @@ export default function DeleteConfirmModal({ trade, onConfirm, onCancel }) {
               flex: 1,
               justifyContent: 'center',
               padding: '10px',
-              background: '#df514c',
+              background: 'var(--loss-red)',
               color: '#fff',
               fontWeight: '600',
             }}

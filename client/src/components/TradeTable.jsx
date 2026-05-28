@@ -16,8 +16,8 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
         {[...Array(5)].map((_, i) => (
           <div key={i} style={{
             height: '60px',
-            borderRadius: '12px',
-            background: 'rgba(139, 92, 246, 0.04)',
+            borderRadius: 'var(--radius-card)',
+            background: 'var(--bg-card)',
             border: '1.5px solid var(--border-color)',
             animation: 'pulse 1.5s ease-in-out infinite',
           }} />
@@ -32,7 +32,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
       <div style={{
         background: 'var(--bg-card)',
         border: '1.5px solid var(--border-color)',
-        borderRadius: '14px',
+        borderRadius: 'var(--radius-card)',
         padding: '12px 16px',
         marginBottom: '14px',
         display: 'flex',
@@ -40,17 +40,17 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
         gap: '12px',
         flexWrap: 'wrap',
         backdropFilter: 'blur(10px)',
-        boxShadow: '0 2px 16px rgba(139,92,246,0.06)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#a78bfa', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--accent-color)', flexShrink: 0 }}>
           <Filter size={13} />
-          <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8b5cf6' }}>Filters</span>
+          <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Filters</span>
         </div>
         <div style={{ width: '1px', height: '22px', background: 'var(--border-color)', flexShrink: 0 }} />
 
         {/* Search */}
         <div style={{ position: 'relative', flex: '1', minWidth: '160px', maxWidth: '280px' }}>
-          <Search size={12} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#8b5cf6', pointerEvents: 'none' }} />
+          <Search size={12} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-color)', pointerEvents: 'none' }} />
           <input
             type="text"
             placeholder="Search session, bias, key level…"
@@ -91,15 +91,15 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
           textAlign: 'center', padding: '80px 20px',
           background: 'var(--bg-card)',
           border: '1.5px solid var(--border-color)',
-          borderRadius: '16px',
-          boxShadow: '0 2px 16px rgba(139,92,246,0.06)',
+          borderRadius: 'var(--radius-card)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
         }}>
           <div style={{
             width: '64px', height: '64px', borderRadius: '50%',
-            background: 'rgba(139,92,246,0.1)',
+            background: 'rgba(255, 87, 34, 0.08)',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px',
           }}>
-            <AlertCircle size={28} style={{ color: '#8b5cf6' }} />
+            <AlertCircle size={28} style={{ color: 'var(--accent-color)' }} />
           </div>
           <p style={{ color: 'var(--text-primary)', fontSize: '14px', margin: '0 0 6px', fontWeight: '700' }}>No trade logs found</p>
           <p style={{ color: 'var(--text-muted)', fontSize: '12.5px', margin: 0 }}>Click "Log Trade" above to record your first trade</p>
@@ -112,8 +112,8 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
             const isWin = trade.outcome === 'WIN';
             const isBuy = trade.direction === 'BUY';
             const isExpanded = expandedTradeId === trade.id;
-            const pnlColor = pnlPos ? '#10b981' : pnlNeg ? '#f43f5e' : '#8b92b6';
-            const dirColor = isBuy ? '#60a5fa' : '#f87171';
+            const pnlColor = pnlPos ? 'var(--win-green)' : pnlNeg ? 'var(--loss-red)' : 'var(--text-muted)';
+            const dirColor = isBuy ? 'var(--buy-blue)' : 'var(--sell-red)';
 
             return (
               <div
@@ -121,12 +121,12 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                 className="stagger-fade-in"
                 style={{
                   background: 'var(--bg-card)',
-                  border: `1.5px solid ${isExpanded ? '#8b5cf6' : 'var(--border-color)'}`,
-                  borderRadius: '14px',
+                  border: `1.5px solid ${isExpanded ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                  borderRadius: 'var(--radius-card)',
                   overflow: 'hidden',
                   boxShadow: isExpanded
-                    ? '0 0 0 3px rgba(139,92,246,0.12), 0 4px 20px rgba(139,92,246,0.08)'
-                    : '0 2px 8px rgba(0,0,0,0.2)',
+                    ? '0 0 0 2px rgba(255, 87, 34, 0.15), 0 4px 12px rgba(255, 87, 34, 0.1)'
+                    : '0 2px 8px rgba(0,0,0,0.04)',
                   transition: 'all 0.2s ease',
                   cursor: 'pointer',
                   backdropFilter: 'blur(10px)',
@@ -141,34 +141,34 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '14px',
-                  background: isExpanded ? 'rgba(139,92,246,0.05)' : 'transparent',
+                  background: isExpanded ? 'rgba(255, 87, 34, 0.04)' : 'transparent',
                   borderBottom: isExpanded ? '1.5px solid var(--border-color)' : 'none',
                   transition: 'background 0.15s ease',
                 }}>
                   {/* Direction Icon */}
                   <div style={{
-                    width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
-                    background: isBuy ? 'rgba(96,165,250,0.1)' : 'rgba(248,113,113,0.1)',
-                    border: `1.5px solid ${isBuy ? 'rgba(96,165,250,0.25)' : 'rgba(248,113,113,0.25)'}`,
+                    width: '38px', height: '38px', borderRadius: 'var(--radius-btn)', flexShrink: 0,
+                    background: isBuy ? 'rgba(65, 132, 243, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+                    border: `1.5px solid ${isBuy ? 'rgba(65, 132, 243, 0.25)' : 'rgba(223, 81, 76, 0.25)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    {isBuy ? <ArrowUpRight size={18} color="#60a5fa" /> : <ArrowDownRight size={18} color="#f87171" />}
+                    {isBuy ? <ArrowUpRight size={18} color="var(--buy-blue)" /> : <ArrowDownRight size={18} color="var(--sell-red)" />}
                   </div>
 
                   {/* Date & Session */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#f5f3ff' }}>{trade.trade_date}</span>
-                      {trade.trade_time && <span style={{ fontSize: '11px', color: '#8b92b6', fontWeight: '500' }}>{trade.trade_time}</span>}
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{trade.trade_date}</span>
+                      {trade.trade_time && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trade.trade_time}</span>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
                       {trade.session && (
-                        <span style={{ fontSize: '10.5px', fontWeight: '600', color: '#c084fc', background: 'rgba(192,132,252,0.1)', padding: '1px 8px', borderRadius: '99px', border: '1px solid rgba(192,132,252,0.2)' }}>
+                        <span style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--accent-color)', background: 'rgba(255, 87, 34, 0.08)', padding: '1px 8px', borderRadius: '99px', border: '1px solid rgba(255, 87, 34, 0.2)' }}>
                           {trade.session}
                         </span>
                       )}
                       {trade.bias && (
-                        <span style={{ fontSize: '10.5px', fontWeight: '700', color: trade.bias === 'Bullish' ? '#10b981' : trade.bias === 'Bearish' ? '#f43f5e' : '#8b92b6' }}>
+                        <span style={{ fontSize: '10.5px', fontWeight: '700', color: trade.bias === 'Bullish' ? 'var(--win-green)' : trade.bias === 'Bearish' ? 'var(--loss-red)' : 'var(--text-muted)' }}>
                           {trade.bias}
                         </span>
                       )}
@@ -178,21 +178,21 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                   {/* Checklist Badges */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexShrink: 0 }}>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '9.5px', color: '#8b92b6', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Key Level</div>
-                      <span style={{ fontSize: '11.5px', color: '#cbd5e1', fontWeight: '600', maxWidth: '100px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trade.key_level || '—'}</span>
+                      <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Key Level</div>
+                      <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontWeight: '600', maxWidth: '100px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trade.key_level || '—'}</span>
                     </div>
                     {[{ label: 'Tap', val: trade.key_level_tap }, { label: 'CISD', val: trade.cisd || 'NO' }].map(({ label, val }) => {
                       const isYes = val === 'YES';
                       return (
                         <div key={label} style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '9.5px', color: '#8b92b6', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>{label}</div>
+                          <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>{label}</div>
                           <div style={{
                             width: '20px', height: '20px', borderRadius: '50%',
-                            background: isYes ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-                            border: `1.5px solid ${isYes ? '#10b981' : '#f43f5e'}`,
+                            background: isYes ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+                            border: `1.5px solid ${isYes ? 'var(--win-green)' : 'var(--loss-red)'}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             margin: '0 auto', fontSize: '9px', fontWeight: '800',
-                            color: isYes ? '#10b981' : '#f43f5e',
+                            color: isYes ? 'var(--win-green)' : 'var(--loss-red)',
                           }}>
                             {isYes ? '✓' : '✗'}
                           </div>
@@ -205,38 +205,38 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
                     {trade.risk != null && (
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '10px', color: '#8b92b6', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Risk</div>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#8b92b6', fontFamily: 'monospace' }}>${trade.risk.toFixed(0)}</span>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Risk</div>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', fontFamily: 'monospace' }}>${trade.risk.toFixed(0)}</span>
                       </div>
                     )}
                     <div style={{ textAlign: 'right', minWidth: '84px' }}>
-                      <div style={{ fontSize: '10px', color: '#8b92b6', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Net P&L</div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Net P&L</div>
                       <span style={{ fontSize: '16px', fontWeight: '800', fontFamily: 'monospace', color: pnlColor, letterSpacing: '-0.5px' }}>
                         {pnlPos ? '+' : ''}${trade.net_pnl.toFixed(2)}
                       </span>
                     </div>
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      minWidth: '48px', padding: '4px 10px', borderRadius: '99px',
+                      minWidth: '48px', padding: '4px 10px', borderRadius: 'var(--radius-badge)',
                       fontSize: '11px', fontWeight: '800', letterSpacing: '0.04em',
-                      background: isWin ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-                      color: isWin ? '#10b981' : '#f43f5e',
-                      border: `1px solid ${isWin ? 'rgba(16,185,129,0.25)' : 'rgba(244,63,94,0.25)'}`,
+                      background: isWin ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+                      color: isWin ? 'var(--win-green)' : 'var(--loss-red)',
+                      border: `1px solid ${isWin ? 'rgba(0, 162, 124, 0.2)' : 'rgba(223, 81, 76, 0.2)'}`,
                     }}>
                       {trade.outcome}
                     </span>
 
                     {/* Action Buttons */}
                     <div style={{ display: 'flex', gap: '2px' }} onClick={e => e.stopPropagation()}>
-                      <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="#8b5cf6">
+                      <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="var(--accent-color)">
                         <Pencil size={13} />
                       </ActionBtn>
-                      <ActionBtn onClick={() => onDelete(trade)} title="Delete trade" id={`btn-delete-${trade.id}`} color="#f43f5e">
+                      <ActionBtn onClick={() => onDelete(trade)} title="Delete trade" id={`btn-delete-${trade.id}`} color="var(--sell-red)">
                         <Trash2 size={13} />
                       </ActionBtn>
                     </div>
 
-                    <div style={{ color: isExpanded ? '#8b5cf6' : '#475569', transition: 'color 0.2s' }}>
+                    <div style={{ color: isExpanded ? 'var(--accent-color)' : 'var(--text-muted)', transition: 'color 0.2s' }}>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </div>
                   </div>
@@ -244,11 +244,11 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
 
                 {/* Expandable Narrative Section */}
                 {isExpanded && (
-                  <div style={{ padding: '18px', background: 'rgba(139,92,246,0.03)', animation: 'slideInDown 0.2s ease' }}>
+                  <div style={{ padding: '18px', background: 'var(--bg-primary)', animation: 'slideInDown 0.2s ease' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-                      <NarrativeBlock icon={<BookOpen size={13} />} label="Why This Trade?" content={trade.why_this_trade} color="#8b5cf6" bg="rgba(139,92,246,0.06)" border="rgba(139,92,246,0.2)" />
-                      <NarrativeBlock icon={<Brain size={13} />} label="Mindset & Psychology" content={trade.emotion_mindset} color="#c084fc" bg="rgba(192,132,252,0.06)" border="rgba(192,132,252,0.2)" />
-                      <NarrativeBlock icon={<ShieldAlert size={13} />} label="Improvements" content={trade.mistake_improve} color="#f43f5e" bg="rgba(244,63,94,0.06)" border="rgba(244,63,94,0.2)" />
+                      <NarrativeBlock icon={<BookOpen size={13} />} label="Why This Trade?" content={trade.why_this_trade} color="var(--accent-color)" bg="var(--bg-secondary)" border="var(--border-color)" />
+                      <NarrativeBlock icon={<Brain size={13} />} label="Mindset & Psychology" content={trade.emotion_mindset} color="var(--accent-color)" bg="var(--bg-secondary)" border="var(--border-color)" />
+                      <NarrativeBlock icon={<ShieldAlert size={13} />} label="Improvements" content={trade.mistake_improve} color="var(--loss-red)" bg="var(--bg-secondary)" border="var(--border-color)" />
                     </div>
                   </div>
                 )}
@@ -258,12 +258,12 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
 
           {/* Footer */}
           <div style={{ padding: '12px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', color: '#8b92b6', fontWeight: '500' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>
               Showing {trades.length} trade{trades.length !== 1 ? 's' : ''}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8b5cf6', boxShadow: '0 0 8px rgba(139,92,246,0.5)' }} />
-              <span style={{ fontSize: '11px', color: '#8b92b6' }}>Click any row to expand details</span>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px rgba(255, 87, 34, 0.4)' }} />
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Click any row to expand details</span>
             </div>
           </div>
         </div>
@@ -279,20 +279,27 @@ function ActionBtn({ onClick, title, id, color, children }) {
       title={title}
       id={id}
       style={{
-        width: '30px', height: '30px', borderRadius: '8px',
-        background: 'transparent', border: '1.5px solid var(--border-color)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', color: '#8b92b6', transition: 'all 0.15s ease',
+        width: '30px',
+        height: '30px',
+        borderRadius: 'var(--radius-btn)',
+        background: 'transparent',
+        border: '1.5px solid var(--border-color)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        color: 'var(--text-muted)',
+        transition: 'all 0.15s ease',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = `${color}15`;
-        e.currentTarget.style.borderColor = `${color}40`;
+        e.currentTarget.style.background = 'var(--bg-row-hover)';
+        e.currentTarget.style.borderColor = color;
         e.currentTarget.style.color = color;
       }}
       onMouseLeave={e => {
         e.currentTarget.style.background = 'transparent';
         e.currentTarget.style.borderColor = 'var(--border-color)';
-        e.currentTarget.style.color = '#8b92b6';
+        e.currentTarget.style.color = 'var(--text-muted)';
       }}
     >
       {children}
@@ -303,16 +310,16 @@ function ActionBtn({ onClick, title, id, color, children }) {
 function NarrativeBlock({ icon, label, content, color, bg, border }) {
   return (
     <div style={{
-      background: bg || 'rgba(139,92,246,0.04)',
+      background: bg || 'var(--bg-secondary)',
       border: `1.5px solid ${border || 'var(--border-color)'}`,
-      borderRadius: '12px',
+      borderRadius: 'var(--radius-card)',
       padding: '14px 16px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '9px', color }}>
         {icon}
         <span style={{ fontSize: '10.5px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
       </div>
-      <p style={{ fontSize: '12.5px', color: '#cbd5e1', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+      <p style={{ fontSize: '12.5px', color: 'var(--text-primary)', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
         {content || 'No notes logged.'}
       </p>
     </div>

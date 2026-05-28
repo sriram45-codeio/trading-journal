@@ -5,41 +5,51 @@
 @tailwind utilities;
 
 :root {
-  /* Premium Dark Space & Violet Theme Variables */
-  --bg-primary: #030014;
-  --bg-secondary: #070519;
-  --bg-card: rgba(13, 10, 33, 0.75);
-  --bg-input: #050312;
-  --bg-header: #070519;
-  --bg-table-header: #110d2e;
-  --bg-row-hover: rgba(139, 92, 246, 0.12);
-  --border-color: rgba(139, 92, 246, 0.18);
-  --border-subtle: rgba(139, 92, 246, 0.08);
-  --text-primary: #f5f3ff;
-  --text-secondary: #cbd5e1;
-  --text-muted: #8b92b6;
+  /* Zerodha Kite Dark Mode Colors */
+  --bg-primary: #191919;
+  --bg-secondary: #1e1e1e;
+  --bg-card: #1f1f1f;
+  --bg-input: #121212;
+  --bg-header: #1e1e1e;
+  --bg-table-header: #151515;
+  --bg-row-hover: rgba(255, 87, 34, 0.06);
+  --border-color: #2d2d2d;
+  --border-subtle: #252525;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #707070;
 
-  /* Modern rounded corners variables */
-  --radius-card: 16px;
-  --radius-btn: 10px;
-  --radius-input: 10px;
-  --radius-badge: 6px;
+  /* Kite Theme Colors */
+  --accent-color: #ff5722;
+  --accent-hover: #ff6f43;
+  --buy-blue: #4184f3;
+  --buy-blue-hover: #5a95f5;
+  --sell-red: #df514c;
+  --sell-red-hover: #e56864;
+  --win-green: #00a27c;
+  --loss-red: #df514c;
+
+  /* Modern rounded corners variables - Zerodha is compact and flat */
+  --radius-card: 4px;
+  --radius-btn: 3px;
+  --radius-input: 3px;
+  --radius-badge: 2px;
 }
 
-/* Light Theme Variables Override — Styled with subtle cream-lavender */
+/* Light Theme Variables Override - Clean white & light gray */
 .light {
-  --bg-primary: #f7f6fd;
+  --bg-primary: #fafafa;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
-  --bg-input: #f3f0fd;
+  --bg-input: #ffffff;
   --bg-header: #ffffff;
-  --bg-table-header: #ede9fe;
-  --bg-row-hover: rgba(139, 92, 246, 0.06);
-  --border-color: rgba(139, 92, 246, 0.15);
-  --border-subtle: rgba(139, 92, 246, 0.08);
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #94a3b8;
+  --bg-table-header: #fbfbfb;
+  --bg-row-hover: rgba(255, 87, 34, 0.04);
+  --border-color: #e0e0e0;
+  --border-subtle: #eeeeee;
+  --text-primary: #444444;
+  --text-secondary: #666666;
+  --text-muted: #9b9b9b;
 }
 
 *, *::before, *::after {
@@ -75,7 +85,7 @@ body {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #8b5cf6;
+  background: var(--accent-color);
 }
 
 /* Rounded, interactive inputs */
@@ -91,9 +101,9 @@ body {
   outline: none;
 }
 .kite-input:focus {
-  border-color: #8b5cf6;
+  border-color: var(--accent-color);
   background: var(--bg-card);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.15);
 }
 .kite-input::placeholder {
   color: var(--text-muted);
@@ -106,7 +116,7 @@ body {
 /* Interactive custom elements */
 select.kite-input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ff5722' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 32px;
@@ -135,28 +145,28 @@ select.kite-input {
   cursor: not-allowed;
 }
 .kite-btn-blue {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  background: var(--buy-blue);
   color: #fff;
 }
 .kite-btn-blue:hover:not(:disabled) {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+  background: var(--buy-blue-hover);
+  box-shadow: 0 2px 8px rgba(65, 132, 243, 0.25);
 }
 .kite-btn-red {
-  background: #e11d48;
+  background: var(--sell-red);
   color: #fff;
 }
 .kite-btn-red:hover:not(:disabled) {
-  background: #f43f5e;
-  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.3);
+  background: var(--sell-red-hover);
+  box-shadow: 0 2px 8px rgba(223, 81, 76, 0.25);
 }
 .kite-btn-orange {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: var(--accent-color);
   color: #fff;
 }
 .kite-btn-orange:hover:not(:disabled) {
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+  background: var(--accent-hover);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.25);
 }
 .kite-btn-ghost {
   background: transparent;
@@ -165,7 +175,7 @@ select.kite-input {
 }
 .kite-btn-ghost:hover:not(:disabled) {
   background: var(--bg-row-hover);
-  border-color: #8b5cf6;
+  border-color: var(--accent-color);
   color: var(--text-primary);
 }
 
@@ -213,9 +223,9 @@ select.kite-input {
 
 /* Direction badges */
 .badge-buy {
-  background: rgba(65, 132, 243, 0.12);
-  color: #4184f3;
-  border: 1px solid rgba(65, 132, 243, 0.3);
+  background: rgba(65, 132, 243, 0.1);
+  color: var(--buy-blue);
+  border: 1px solid rgba(65, 132, 243, 0.25);
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
@@ -223,9 +233,9 @@ select.kite-input {
   letter-spacing: 0.05em;
 }
 .badge-sell {
-  background: rgba(223, 81, 76, 0.12);
-  color: #df514c;
-  border: 1px solid rgba(223, 81, 76, 0.3);
+  background: rgba(223, 81, 76, 0.1);
+  color: var(--sell-red);
+  border: 1px solid rgba(223, 81, 76, 0.25);
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
@@ -233,18 +243,18 @@ select.kite-input {
   letter-spacing: 0.05em;
 }
 .badge-win {
-  background: rgba(46, 189, 133, 0.1);
-  color: #2ebd85;
-  border: 1px solid rgba(46, 189, 133, 0.25);
+  background: rgba(0, 162, 124, 0.08);
+  color: var(--win-green);
+  border: 1px solid rgba(0, 162, 124, 0.2);
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: var(--radius-badge);
 }
 .badge-loss {
-  background: rgba(223, 81, 76, 0.1);
-  color: #df514c;
-  border: 1px solid rgba(223, 81, 76, 0.25);
+  background: rgba(223, 81, 76, 0.08);
+  color: var(--loss-red);
+  border: 1px solid rgba(223, 81, 76, 0.2);
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
@@ -280,8 +290,8 @@ select.kite-input {
 
 /* Mono numbers */
 .num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
-.text-profit { color: #2ebd85; }
-.text-loss { color: #df514c; }
+.text-profit { color: var(--win-green); }
+.text-loss { color: var(--loss-red); }
 .text-neutral { color: var(--text-muted); }
 
 /* ═══════════════════════════════════════════════════
@@ -305,16 +315,16 @@ select.kite-input {
   border-color: rgba(243, 89, 54, 0.25);
 }
 .report-card-win {
-  border-left: 3px solid #2ebd85;
+  border-left: 3px solid var(--win-green);
 }
 .report-card-win:hover {
-  box-shadow: 0 8px 30px rgba(46, 189, 133, 0.1), 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 8px 30px rgba(0, 162, 124, 0.08), 0 2px 8px rgba(0,0,0,0.04);
 }
 .report-card-loss {
-  border-left: 3px solid #df514c;
+  border-left: 3px solid var(--loss-red);
 }
 .report-card-loss:hover {
-  box-shadow: 0 8px 30px rgba(223, 81, 76, 0.1), 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 8px 30px rgba(223, 81, 76, 0.08), 0 2px 8px rgba(0,0,0,0.04);
 }
 
 /* Filter Chips */
@@ -340,14 +350,14 @@ select.kite-input {
   color: var(--text-primary);
 }
 .filter-chip-active {
-  background: rgba(243, 89, 54, 0.1);
-  border-color: rgba(243, 89, 54, 0.4);
-  color: #f35936;
+  background: rgba(255, 87, 34, 0.08);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
   font-weight: 600;
 }
 .filter-chip-active:hover {
-  background: rgba(243, 89, 54, 0.15);
-  border-color: #f35936;
+  background: rgba(255, 87, 34, 0.12);
+  border-color: var(--accent-color);
 }
 
 /* Drawer Overlay & Panel */
@@ -439,9 +449,9 @@ select.kite-input {
   outline: none;
 }
 .report-search:focus {
-  border-color: #f35936;
+  border-color: var(--accent-color);
   background: var(--bg-card);
-  box-shadow: 0 0 0 3px rgba(243, 89, 54, 0.08);
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.1);
 }
 .report-search::placeholder {
   color: var(--text-muted);

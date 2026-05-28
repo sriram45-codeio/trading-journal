@@ -11,25 +11,25 @@ function StatCard({ label, value, sub, color, icon }) {
     <div style={{
       background: 'var(--bg-card)',
       border: '1.5px solid var(--border-color)',
-      borderRadius: '14px',
+      borderRadius: 'var(--radius-card)',
       padding: '18px 22px',
       backdropFilter: 'blur(10px)',
-      boxShadow: '0 2px 12px rgba(139,92,246,0.06)',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
       transition: 'all 0.25s ease',
     }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(139,92,246,0.12)'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(139,92,246,0.06)'; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-color)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 87, 34, 0.12)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)'; }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-        {icon && <span style={{ color: color || '#8b5cf6' }}>{icon}</span>}
-        <span style={{ fontSize: '11px', color: '#8b92b6', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>
+        {icon && <span style={{ color: color || 'var(--accent-color)' }}>{icon}</span>}
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>
           {label}
         </span>
       </div>
-      <div style={{ fontSize: '24px', fontWeight: '800', color: color || '#f5f3ff', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+      <div style={{ fontSize: '24px', fontWeight: '800', color: color || 'var(--text-primary)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
         {value}
       </div>
-      {sub && <div style={{ fontSize: '11px', color: '#8b92b6', marginTop: '6px', fontWeight: '500' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', fontWeight: '500' }}>{sub}</div>}
     </div>
   );
 }
@@ -38,10 +38,10 @@ function WinRateRing({ percentage }) {
   const r = 38;
   const circ = 2 * Math.PI * r;
   const offset = circ - (percentage / 100) * circ;
-  const ringColor = percentage >= 50 ? '#10b981' : '#f43f5e';
+  const ringColor = percentage >= 50 ? 'var(--win-green)' : 'var(--loss-red)';
   return (
     <svg width="100" height="100" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r={r} stroke="rgba(139,92,246,0.15)" strokeWidth="7" fill="none" />
+      <circle cx="50" cy="50" r={r} stroke="var(--border-subtle)" strokeWidth="7" fill="none" />
       <circle
         cx="50" cy="50" r={r}
         stroke={ringColor} strokeWidth="7" fill="none"
@@ -63,15 +63,15 @@ function CustomTooltip({ active, payload, label }) {
     const val = payload[0].value;
     return (
       <div style={{
-        background: 'rgba(13,10,33,0.95)',
-        border: '1.5px solid rgba(139,92,246,0.3)',
-        borderRadius: '10px',
+        background: 'var(--bg-secondary)',
+        border: '1.5px solid var(--border-color)',
+        borderRadius: 'var(--radius-card)',
         padding: '10px 14px',
-        boxShadow: '0 4px 20px rgba(139,92,246,0.2)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
         backdropFilter: 'blur(10px)',
       }}>
-        <p style={{ color: '#8b92b6', fontSize: '11px', margin: '0 0 4px', fontWeight: '600' }}>{label}</p>
-        <p style={{ color: val >= 0 ? '#10b981' : '#f43f5e', fontSize: '14px', fontWeight: '800', margin: 0, fontFamily: 'monospace' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '11px', margin: '0 0 4px', fontWeight: '600' }}>{label}</p>
+        <p style={{ color: val >= 0 ? 'var(--win-green)' : 'var(--loss-red)', fontSize: '14px', fontWeight: '800', margin: 0, fontFamily: 'monospace' }}>
           {val >= 0 ? '+' : ''}${val.toFixed(2)}
         </p>
       </div>
@@ -120,8 +120,8 @@ export default function Dashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '14px', marginBottom: '16px' }}>
           {[...Array(5)].map((_, i) => (
             <div key={i} style={{
-              height: '110px', borderRadius: '14px',
-              background: 'rgba(139,92,246,0.06)',
+              height: '110px', borderRadius: 'var(--radius-card)',
+              background: 'var(--border-subtle)',
               border: '1.5px solid var(--border-color)',
               animation: 'pulse 1.5s ease-in-out infinite',
               animationDelay: `${i * 0.1}s`,
@@ -129,8 +129,8 @@ export default function Dashboard() {
           ))}
         </div>
         <div style={{
-          height: '320px', borderRadius: '14px',
-          background: 'rgba(139,92,246,0.06)',
+          height: '320px', borderRadius: 'var(--radius-card)',
+          background: 'var(--border-subtle)',
           border: '1.5px solid var(--border-color)',
           animation: 'pulse 1.5s ease-in-out infinite',
         }} />
@@ -143,21 +143,21 @@ export default function Dashboard() {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '14px' }}>
         <div style={{
           width: '80px', height: '80px', borderRadius: '50%',
-          background: 'rgba(139,92,246,0.1)',
+          background: 'rgba(255, 87, 34, 0.08)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 30px rgba(139,92,246,0.15)',
+          boxShadow: '0 0 30px rgba(255, 87, 34, 0.1)',
         }}>
-          <TrendingUp size={36} style={{ color: '#8b5cf6' }} />
+          <TrendingUp size={36} style={{ color: 'var(--accent-color)' }} />
         </div>
-        <p style={{ color: '#8b92b6', fontSize: '14px', fontWeight: '600' }}>No trades yet. Log your first trade to see analytics.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '600' }}>No trades yet. Log your first trade to see analytics.</p>
       </div>
     );
   }
 
   const lastPnl = analytics.pnl_by_date[analytics.pnl_by_date.length - 1]?.cumulative_pnl || 0;
-  const lineColor = lastPnl >= 0 ? '#10b981' : '#f43f5e';
-  const fillColor = lastPnl >= 0 ? '#10b981' : '#f43f5e';
-  const pnlColor = analytics.total_net_pnl >= 0 ? '#10b981' : '#f43f5e';
+  const lineColor = lastPnl >= 0 ? 'var(--win-green)' : 'var(--loss-red)';
+  const fillColor = lastPnl >= 0 ? 'var(--win-green)' : 'var(--loss-red)';
+  const pnlColor = analytics.total_net_pnl >= 0 ? 'var(--win-green)' : 'var(--loss-red)';
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: '1400px', margin: '0 auto' }}>
@@ -166,10 +166,10 @@ export default function Dashboard() {
         <div>
           <h1 style={{
             fontSize: '18px', fontWeight: '800', margin: 0, letterSpacing: '-0.3px',
-            background: 'linear-gradient(135deg, #c084fc 0%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>Performance Dashboard</h1>
-          <p style={{ fontSize: '11.5px', color: '#8b92b6', margin: '4px 0 0', fontWeight: '500' }}>
+          <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0', fontWeight: '500' }}>
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -189,29 +189,29 @@ export default function Dashboard() {
         <div style={{
           background: 'var(--bg-card)',
           border: '1.5px solid var(--border-color)',
-          borderRadius: '14px',
+          borderRadius: 'var(--radius-card)',
           padding: '18px 24px',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
           backdropFilter: 'blur(10px)',
-          boxShadow: '0 2px 12px rgba(139,92,246,0.06)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
           transition: 'all 0.25s ease',
         }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-color)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'translateY(0)'; }}
         >
           <WinRateRing percentage={analytics.win_rate} />
-          <span style={{ fontSize: '11px', color: '#8b92b6', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>Win Rate</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>Win Rate</span>
         </div>
 
         <StatCard icon={<BarChart3 size={15} />} label="Net P&L" value={`${analytics.total_net_pnl >= 0 ? '+' : ''}$${analytics.total_net_pnl.toFixed(2)}`} color={pnlColor} sub={`${analytics.total_trades} total trades`} />
-        <StatCard icon={<Trophy size={15} />} label="Wins / Losses" value={`${analytics.total_wins} / ${analytics.total_losses}`} color="#f5f3ff"
+        <StatCard icon={<Trophy size={15} />} label="Wins / Losses" value={`${analytics.total_wins} / ${analytics.total_losses}`} color="var(--text-primary)"
           sub={
             <div style={{ marginTop: '6px' }}>
-              <div style={{ height: '5px', background: 'rgba(139,92,246,0.15)', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '5px', background: 'var(--border-subtle)', borderRadius: '3px', overflow: 'hidden' }}>
                 <div style={{
                   height: '100%',
                   width: analytics.total_trades > 0 ? `${(analytics.total_wins / analytics.total_trades) * 100}%` : '0%',
-                  background: 'linear-gradient(90deg, #8b5cf6, #10b981)',
+                  background: 'linear-gradient(90deg, var(--accent-color), var(--win-green))',
                   transition: 'width 0.5s ease',
                   borderRadius: '3px',
                 }} />
@@ -219,24 +219,24 @@ export default function Dashboard() {
             </div>
           }
         />
-        <StatCard icon={<TrendingUp size={15} />} label="Avg Win" value={analytics.avg_win != null ? `$${parseFloat(analytics.avg_win).toFixed(2)}` : '—'} color="#10b981" sub="per winning trade" />
-        <StatCard icon={<Target size={15} />} label="Discipline" value={`${analytics.rules_followed_rate}%`} color="#a78bfa" sub="rules followed" />
+        <StatCard icon={<TrendingUp size={15} />} label="Avg Win" value={analytics.avg_win != null ? `$${parseFloat(analytics.avg_win).toFixed(2)}` : '—'} color="var(--win-green)" sub="per winning trade" />
+        <StatCard icon={<Target size={15} />} label="Discipline" value={`${analytics.rules_followed_rate}%`} color="var(--accent-color)" sub="rules followed" />
       </div>
 
       {/* Chart */}
       <div style={{
         background: 'var(--bg-card)',
         border: '1.5px solid var(--border-color)',
-        borderRadius: '14px',
+        borderRadius: 'var(--radius-card)',
         padding: '20px 24px',
         backdropFilter: 'blur(10px)',
-        boxShadow: '0 2px 12px rgba(139,92,246,0.06)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h2 style={{
-            fontSize: '14px', fontWeight: '800', color: '#f5f3ff', margin: 0,
+            fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', margin: 0,
           }}>Cumulative P&L</h2>
-          <span style={{ fontSize: '11px', color: '#8b92b6', fontWeight: '500' }}>{analytics.pnl_by_date.length} data points</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{analytics.pnl_by_date.length} data points</span>
         </div>
         <div style={{ height: '280px' }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -247,22 +247,22 @@ export default function Dashboard() {
                   <stop offset="95%" stopColor={fillColor} stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,92,246,0.1)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
               <XAxis
                 dataKey="trade_date"
-                stroke="rgba(139,92,246,0.2)"
-                tick={{ fill: '#8b92b6', fontSize: 11 }}
+                stroke="var(--border-color)"
+                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
                 tickFormatter={(v) => v.slice(5)}
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                stroke="rgba(139,92,246,0.2)"
-                tick={{ fill: '#8b92b6', fontSize: 11 }}
+                stroke="var(--border-color)"
+                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
                 tickFormatter={(v) => `$${v}`}
                 axisLine={false} tickLine={false} width={64}
               />
               <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine y={0} stroke="rgba(139,92,246,0.2)" strokeDasharray="4 4" />
+              <ReferenceLine y={0} stroke="var(--border-color)" strokeDasharray="4 4" />
               <Area
                 type="monotone"
                 dataKey="cumulative_pnl"
@@ -270,7 +270,7 @@ export default function Dashboard() {
                 strokeWidth={2.5}
                 fill="url(#pnlGrad)"
                 dot={false}
-                activeDot={{ r: 5, fill: lineColor, stroke: '#0d0a21', strokeWidth: 2.5 }}
+                activeDot={{ r: 5, fill: lineColor, stroke: 'var(--bg-card)', strokeWidth: 2.5 }}
               />
             </AreaChart>
           </ResponsiveContainer>

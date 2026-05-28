@@ -65,15 +65,15 @@ export default function TradeLog() {
       }}>
         <div>
           <h1 style={{
-            fontSize: '18px', fontWeight: '800', color: '#f5f3ff', margin: 0,
+            fontSize: '18px', fontWeight: '800', margin: 0,
             letterSpacing: '-0.3px',
-            background: 'linear-gradient(135deg, #c084fc 0%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
             Trade Log
           </h1>
-          <p style={{ fontSize: '11.5px', color: '#8b92b6', margin: '4px 0 0', fontWeight: '500' }}>
+          <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0', fontWeight: '500' }}>
             {trades.length} trade{trades.length !== 1 ? 's' : ''} recorded · {new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>

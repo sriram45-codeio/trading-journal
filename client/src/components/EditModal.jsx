@@ -60,9 +60,9 @@ export default function EditModal({ trade, onClose, onSuccess }) {
             <span style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-primary)', letterSpacing: '0.02em' }}>EDIT LOGGED TRADE</span>
             <span style={{
               fontSize: '11px', fontWeight: '700',
-              background: 'rgba(243,89,54,0.12)',
-              border: '1px solid rgba(243,89,54,0.3)',
-              color: '#f35936',
+              background: 'rgba(255, 87, 34, 0.08)',
+              border: '1px solid rgba(255, 87, 34, 0.2)',
+              color: 'var(--accent-color)',
               padding: '2px 8px',
               borderRadius: '4px',
             }}>

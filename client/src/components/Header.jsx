@@ -22,14 +22,14 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
       {/* Sleek Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '36px' }}>
         <div style={{
-          background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+          background: 'var(--accent-color)',
           width: '28px',
           height: '28px',
           borderRadius: '8px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+          boxShadow: '0 2px 8px rgba(255, 87, 34, 0.25)'
         }}>
           <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
             <path d="M8 23 L16 9 L24 23" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
@@ -95,7 +95,7 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
             width: '22px',
             height: '22px',
             borderRadius: '50%',
-            background: theme === 'dark' ? '#8b5cf6' : '#7c3aed',
+            background: 'var(--accent-color)',
             transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
             display: 'flex',
@@ -110,8 +110,8 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
           </div>
           
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-around', alignItems: 'center', pointerEvents: 'none' }}>
-            <Moon size={12} style={{ color: theme === 'dark' ? '#8b5cf6' : 'var(--text-muted)', opacity: theme === 'dark' ? 0 : 0.5 }} />
-            <Sun size={12} style={{ color: theme === 'light' ? '#7c3aed' : 'var(--text-muted)', opacity: theme === 'light' ? 0 : 0.5 }} />
+            <Moon size={12} style={{ color: theme === 'dark' ? 'var(--accent-color)' : 'var(--text-muted)', opacity: theme === 'dark' ? 0 : 0.5 }} />
+            <Sun size={12} style={{ color: theme === 'light' ? 'var(--accent-color)' : 'var(--text-muted)', opacity: theme === 'light' ? 0 : 0.5 }} />
           </div>
         </button>
 
@@ -174,8 +174,8 @@ function NavTab({ label, icon, active, onClick, id }) {
         borderRadius: 'var(--radius-btn)',
         fontSize: '13px',
         fontWeight: active ? '700' : '500',
-        color: active ? '#c084fc' : 'var(--text-secondary)',
-        background: active ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+        color: active ? 'var(--accent-color)' : 'var(--text-secondary)',
+        background: active ? 'rgba(255, 87, 34, 0.08)' : 'transparent',
         border: 'none',
         cursor: 'pointer',
         transition: 'all 0.2s ease',

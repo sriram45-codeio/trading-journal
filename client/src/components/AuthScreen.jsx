@@ -41,14 +41,14 @@ export default function AuthScreen({ onAuthSuccess }) {
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
             <div style={{
-              background: 'linear-gradient(135deg, #f35936 0%, #ff7f50 100%)',
+              background: 'linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%)',
               width: '32px',
               height: '32px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-btn)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 10px rgba(243, 89, 54, 0.3)'
+              boxShadow: '0 4px 10px rgba(255, 87, 34, 0.25)'
             }}>
               <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
                 <path d="M8 23 L16 9 L24 23" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
@@ -78,8 +78,8 @@ export default function AuthScreen({ onAuthSuccess }) {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: mode === m ? '#f35936' : 'var(--text-muted)',
-                  borderBottom: mode === m ? '2.5px solid #f35936' : '2.5px solid transparent',
+                  color: mode === m ? 'var(--accent-color)' : 'var(--text-muted)',
+                  borderBottom: mode === m ? '2.5px solid var(--accent-color)' : '2.5px solid transparent',
                   marginBottom: '-1.5px',
                   transition: 'all 0.2s ease',
                 }}
@@ -168,7 +168,7 @@ export default function AuthScreen({ onAuthSuccess }) {
             {isSignup ? 'Already have an account? ' : "Don't have an account? "}
             <button
               onClick={() => { setMode(isSignup ? 'login' : 'signup'); setError(''); }}
-              style={{ background: 'none', border: 'none', color: '#f35936', cursor: 'pointer', fontSize: '12px', fontWeight: '600', padding: 0 }}
+              style={{ background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '12px', fontWeight: '600', padding: 0 }}
             >
               {isSignup ? 'Sign in' : 'Create one'}
             </button>

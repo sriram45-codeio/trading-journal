@@ -3,7 +3,7 @@ import AuthScreen from './components/AuthScreen';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
-import TradeLog from './components/TradeLog';
+import ReportPage from './components/report/ReportPage';
 import TradingReports from './components/report/TradingReports';
 
 export default function App() {
@@ -18,6 +18,11 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('tj_theme', theme);
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
   }, [theme]);
 
   const handleAuthSuccess = () => setIsAuthenticated(true);
@@ -69,7 +74,7 @@ export default function App() {
         />
         <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)' }}>
           {activePage === 'dashboard' && <Dashboard />}
-          {activePage === 'trades' && <TradeLog />}
+          {activePage === 'trades' && <ReportPage />}
           {activePage === 'reports' && <TradingReports />}
         </main>
       </div>

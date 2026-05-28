@@ -22,21 +22,21 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
   const pnlPos = trade.net_pnl > 0;
   const pnlNeg = trade.net_pnl < 0;
   const isBuy = trade.direction === 'BUY';
-  const dirColor = isBuy ? '#0284c7' : '#e11d48';
-  const pnlColor = pnlPos ? '#059669' : pnlNeg ? '#e11d48' : '#64748b';
-  const winBg = isWin ? 'rgba(5,150,105,0.04)' : 'rgba(225,29,72,0.04)';
-  const winBorder = isWin ? 'rgba(5,150,105,0.18)' : 'rgba(225,29,72,0.18)';
+  const dirColor = isBuy ? 'var(--buy-blue)' : 'var(--sell-red)';
+  const pnlColor = pnlPos ? 'var(--win-green)' : pnlNeg ? 'var(--loss-red)' : 'var(--text-muted)';
+  const winBg = isWin ? 'rgba(0, 162, 124, 0.04)' : 'rgba(223, 81, 76, 0.04)';
+  const winBorder = isWin ? 'rgba(0, 162, 124, 0.15)' : 'rgba(223, 81, 76, 0.15)';
 
   return (
     <div
       style={{
-        background: '#ffffff',
-        border: `1.5px solid ${isExpanded ? '#06b6d4' : winBorder}`,
-        borderRadius: '14px',
+        background: 'var(--bg-card)',
+        border: `1.5px solid ${isExpanded ? 'var(--accent-color)' : winBorder}`,
+        borderRadius: 'var(--radius-card)',
         overflow: 'hidden',
         boxShadow: isExpanded
-          ? '0 0 0 3px rgba(6,182,212,0.1), 0 4px 16px rgba(6,182,212,0.08)'
-          : '0 1px 4px rgba(15,23,42,0.05)',
+          ? '0 0 0 2px rgba(255, 87, 34, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08)'
+          : '0 1px 4px rgba(0, 0, 0, 0.04)',
         transition: 'all 0.2s ease',
         animationDelay: `${index * 50}ms`,
       }}
@@ -52,8 +52,8 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
           justifyContent: 'space-between',
           gap: '12px',
           cursor: 'pointer',
-          background: isExpanded ? 'rgba(6,182,212,0.03)' : '#fff',
-          borderBottom: isExpanded ? '1.5px solid #e0f2fe' : 'none',
+          background: isExpanded ? 'rgba(255, 87, 34, 0.04)' : 'var(--bg-card)',
+          borderBottom: isExpanded ? '1.5px solid var(--border-color)' : 'none',
           transition: 'background 0.15s ease',
         }}
         onClick={() => onToggleExpand(trade.id)}
@@ -62,26 +62,26 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
           {/* Direction Icon */}
           <div style={{
-            width: '38px', height: '38px', borderRadius: '10px',
-            background: isBuy ? 'rgba(2,132,199,0.08)' : 'rgba(225,29,72,0.08)',
-            border: `1.5px solid ${isBuy ? 'rgba(2,132,199,0.25)' : 'rgba(225,29,72,0.25)'}`,
+            width: '38px', height: '38px', borderRadius: 'var(--radius-btn)',
+            background: isBuy ? 'rgba(65, 132, 243, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+            border: `1.5px solid ${isBuy ? 'rgba(65, 132, 243, 0.25)' : 'rgba(223, 81, 76, 0.25)'}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
             {isBuy
-              ? <ArrowUpRight size={18} color="#0284c7" />
-              : <ArrowDownRight size={18} color="#e11d48" />
+              ? <ArrowUpRight size={18} color="var(--buy-blue)" />
+              : <ArrowDownRight size={18} color="var(--sell-red)" />
             }
           </div>
 
           {/* Date, Time, Session, Bias */}
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
                 {trade.trade_date}
               </span>
               {trade.trade_time && (
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>
                   {trade.trade_time}
                 </span>
               )}
@@ -89,9 +89,9 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
               {trade.session && (
                 <span style={{
-                  fontSize: '10.5px', fontWeight: '600', color: '#0891b2',
-                  background: '#e0f2fe', padding: '1px 8px', borderRadius: '99px',
-                  border: '1px solid #bae6fd',
+                  fontSize: '10.5px', fontWeight: '600', color: 'var(--accent-color)',
+                  background: 'rgba(255, 87, 34, 0.08)', padding: '1px 8px', borderRadius: 'var(--radius-badge)',
+                  border: '1px solid var(--border-color)',
                 }}>
                   {trade.session}
                 </span>
@@ -99,7 +99,7 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
               {trade.bias && (
                 <span style={{
                   fontSize: '10.5px', fontWeight: '700',
-                  color: trade.bias === 'Bullish' ? '#059669' : trade.bias === 'Bearish' ? '#e11d48' : '#64748b',
+                  color: trade.bias === 'Bullish' ? 'var(--win-green)' : trade.bias === 'Bearish' ? 'var(--loss-red)' : 'var(--text-muted)',
                 }}>
                   {trade.bias}
                 </span>
@@ -120,8 +120,8 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
           {/* Risk */}
           {trade.risk != null && (
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Risk</div>
-              <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', fontFamily: 'monospace' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Risk</div>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
                 ${trade.risk.toFixed(0)}
               </span>
             </div>
@@ -129,7 +129,7 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
 
           {/* Net P&L */}
           <div style={{ textAlign: 'right', minWidth: '84px' }}>
-            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Net P&L</div>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Net P&L</div>
             <span style={{
               fontSize: '16px', fontWeight: '800', fontFamily: 'monospace',
               color: pnlColor, letterSpacing: '-0.5px',
@@ -141,33 +141,33 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
           {/* Outcome Badge */}
           <span style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            minWidth: '48px', padding: '4px 10px', borderRadius: '99px',
+            minWidth: '48px', padding: '4px 10px', borderRadius: 'var(--radius-badge)',
             fontSize: '11px', fontWeight: '800', letterSpacing: '0.04em',
-            background: isWin ? 'rgba(5,150,105,0.1)' : 'rgba(225,29,72,0.1)',
-            color: isWin ? '#059669' : '#e11d48',
-            border: `1px solid ${isWin ? 'rgba(5,150,105,0.25)' : 'rgba(225,29,72,0.25)'}`,
+            background: isWin ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+            color: isWin ? 'var(--win-green)' : 'var(--loss-red)',
+            border: `1px solid ${isWin ? 'rgba(0, 162, 124, 0.2)' : 'rgba(223, 81, 76, 0.2)'}`,
           }}>
             {trade.outcome}
           </span>
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '2px' }} onClick={e => e.stopPropagation()}>
-            <ActionBtn onClick={() => onView(trade)} title="View details" id={`btn-view-${trade.id}`} color="#0891b2">
+            <ActionBtn onClick={() => onView(trade)} title="View details" id={`btn-view-${trade.id}`} color="var(--accent-color)">
               <Eye size={14} />
             </ActionBtn>
-            <ActionBtn onClick={handleDownloadPdf} title="Download PDF Runsheet" id={`btn-pdf-${trade.id}`} color="#f35936">
+            <ActionBtn onClick={handleDownloadPdf} title="Download PDF Runsheet" id={`btn-pdf-${trade.id}`} color="var(--accent-color)">
               <Download size={14} />
             </ActionBtn>
-            <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="#7c3aed">
+            <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="var(--accent-color)">
               <Pencil size={14} />
             </ActionBtn>
-            <ActionBtn onClick={() => onDelete(trade)} title="Archive trade" id={`btn-delete-${trade.id}`} color="#e11d48">
+            <ActionBtn onClick={() => onDelete(trade)} title="Archive trade" id={`btn-delete-${trade.id}`} color="var(--loss-red)">
               <Trash2 size={14} />
             </ActionBtn>
           </div>
 
           {/* Expand chevron */}
-          <div style={{ color: isExpanded ? '#0891b2' : '#cbd5e1', transition: 'color 0.2s' }}>
+          <div style={{ color: isExpanded ? 'var(--accent-color)' : 'var(--text-muted)', transition: 'color 0.2s' }}>
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
         </div>
@@ -177,7 +177,8 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
       {isExpanded && (
         <div style={{
           padding: '18px 18px',
-          background: 'rgba(240,249,255,0.6)',
+          background: 'var(--bg-primary)',
+          borderTop: '1px solid var(--border-color)',
           animation: 'slideInDown 0.2s ease',
         }}>
           <div style={{
@@ -189,25 +190,25 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
               icon={<BookOpen size={13} />}
               label="Why This Trade?"
               content={trade.why_this_trade}
-              color="#0891b2"
-              bg="#f0f9ff"
-              border="#bae6fd"
+              color="var(--accent-color)"
+              bg="var(--bg-secondary)"
+              border="var(--border-color)"
             />
             <NarrativeBlock
               icon={<Brain size={13} />}
               label="Mindset & Psychology"
               content={trade.emotion_mindset}
-              color="#7c3aed"
-              bg="#faf5ff"
-              border="#e9d5ff"
+              color="var(--accent-color)"
+              bg="var(--bg-secondary)"
+              border="var(--border-color)"
             />
             <NarrativeBlock
               icon={<ShieldAlert size={13} />}
               label="Improvements"
               content={trade.mistake_improve}
-              color="#e11d48"
-              bg="#fff1f2"
-              border="#fecdd3"
+              color="var(--loss-red)"
+              bg="var(--bg-secondary)"
+              border="var(--border-color)"
             />
           </div>
         </div>
@@ -223,20 +224,22 @@ function ActionBtn({ onClick, title, id, color, children }) {
       title={title}
       id={id}
       style={{
-        width: '30px', height: '30px', borderRadius: '8px',
-        background: 'transparent', border: '1px solid #e2e8f0',
+        width: '30px', height: '30px', borderRadius: 'var(--radius-btn)',
+        background: 'transparent', border: '1px solid var(--border-color)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', color: '#94a3b8', transition: 'all 0.15s ease',
+        cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.15s ease',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = `${color}12`;
-        e.currentTarget.style.borderColor = `${color}40`;
-        e.currentTarget.style.color = color;
+        // Simple support for variables
+        const cleanColor = color.startsWith('var(') ? 'var(--accent-color)' : color;
+        e.currentTarget.style.background = 'var(--bg-row-hover)';
+        e.currentTarget.style.borderColor = 'var(--accent-color)';
+        e.currentTarget.style.color = cleanColor;
       }}
       onMouseLeave={e => {
         e.currentTarget.style.background = 'transparent';
-        e.currentTarget.style.borderColor = '#e2e8f0';
-        e.currentTarget.style.color = '#94a3b8';
+        e.currentTarget.style.borderColor = 'var(--border-color)';
+        e.currentTarget.style.color = 'var(--text-muted)';
       }}
     >
       {children}
@@ -247,11 +250,11 @@ function ActionBtn({ onClick, title, id, color, children }) {
 function MetricBadge({ label, value, maxWidth }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
+      <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
         {label}
       </div>
       <span style={{
-        fontSize: '11.5px', color: '#334155', fontWeight: '600',
+        fontSize: '11.5px', color: 'var(--text-primary)', fontWeight: '600',
         display: 'block', maxWidth: maxWidth || 'auto',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
@@ -265,16 +268,16 @@ function BoolDot({ label, value }) {
   const isYes = value === 'YES';
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
+      <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
         {label}
       </div>
       <div style={{
         width: '20px', height: '20px', borderRadius: '50%',
-        background: isYes ? 'rgba(5,150,105,0.1)' : 'rgba(225,29,72,0.1)',
-        border: `1.5px solid ${isYes ? '#10b981' : '#f43f5e'}`,
+        background: isYes ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+        border: `1.5px solid ${isYes ? 'var(--win-green)' : 'var(--loss-red)'}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         margin: '0 auto', fontSize: '9px', fontWeight: '800',
-        color: isYes ? '#059669' : '#e11d48',
+        color: isYes ? 'var(--win-green)' : 'var(--loss-red)',
       }}>
         {isYes ? '✓' : '✗'}
       </div>
@@ -285,9 +288,9 @@ function BoolDot({ label, value }) {
 function NarrativeBlock({ icon, label, content, color, bg, border }) {
   return (
     <div style={{
-      background: bg || '#f8fafc',
-      border: `1.5px solid ${border || '#e2e8f0'}`,
-      borderRadius: '12px',
+      background: bg || 'var(--bg-secondary)',
+      border: `1.5px solid ${border || 'var(--border-color)'}`,
+      borderRadius: 'var(--radius-card)',
       padding: '14px 16px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '9px', color }}>
@@ -297,7 +300,7 @@ function NarrativeBlock({ icon, label, content, color, bg, border }) {
         </span>
       </div>
       <p style={{
-        fontSize: '12.5px', color: '#334155', margin: 0,
+        fontSize: '12.5px', color: 'var(--text-primary)', margin: 0,
         whiteSpace: 'pre-wrap', lineHeight: '1.6',
       }}>
         {content || 'No notes logged.'}

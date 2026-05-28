@@ -31,8 +31,8 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
   const isWin = trade.outcome === 'WIN';
   const pnlPos = trade.net_pnl > 0;
   const pnlNeg = trade.net_pnl < 0;
-  const dirColor = trade.direction === 'BUY' ? '#4184f3' : '#df514c';
-  const pnlColor = pnlPos ? '#2ebd85' : pnlNeg ? '#df514c' : 'var(--text-muted)';
+  const dirColor = trade.direction === 'BUY' ? 'var(--buy-blue)' : 'var(--sell-red)';
+  const pnlColor = pnlPos ? 'var(--win-green)' : pnlNeg ? 'var(--loss-red)' : 'var(--text-muted)';
 
   return (
     <>
@@ -57,9 +57,9 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
             <span style={{
               fontSize: '11px',
               fontWeight: '700',
-              background: 'rgba(243, 89, 54, 0.12)',
-              border: '1px solid rgba(243, 89, 54, 0.3)',
-              color: '#f35936',
+              background: 'rgba(255, 87, 34, 0.08)',
+              border: '1px solid rgba(255, 87, 34, 0.25)',
+              color: 'var(--accent-color)',
               padding: '2px 8px',
               borderRadius: '4px',
             }}>
@@ -138,7 +138,7 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
             Trade Checklist
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <ChecklistItem label="Market Bias" value={trade.bias || '—'} accent={trade.bias === 'Bullish' ? '#2ebd85' : trade.bias === 'Bearish' ? '#df514c' : null} />
+            <ChecklistItem label="Market Bias" value={trade.bias || '—'} accent={trade.bias === 'Bullish' ? 'var(--win-green)' : trade.bias === 'Bearish' ? 'var(--loss-red)' : null} />
             <ChecklistItem label="Key Level" value={trade.key_level || '—'} />
             <ChecklistItem label="Key Level Tap" value={trade.key_level_tap} isBoolean />
             <ChecklistItem label="CISD" value={trade.cisd || 'NO'} isBoolean />
@@ -167,19 +167,19 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
               icon={<BookOpen size={14} />}
               title="Why This Trade?"
               content={trade.why_this_trade}
-              color="#f35936"
+              color="var(--accent-color)"
             />
             <NarrativeSection
               icon={<Brain size={14} />}
               title="Mindset & Psychology"
               content={trade.emotion_mindset}
-              color="#4184f3"
+              color="var(--accent-color)"
             />
             <NarrativeSection
               icon={<ShieldAlert size={14} />}
               title="Actionable Improvements"
               content={trade.mistake_improve}
-              color="#df514c"
+              color="var(--loss-red)"
             />
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
           <button
             onClick={() => { onDelete(trade); onClose(); }}
             className="kite-btn kite-btn-ghost"
-            style={{ padding: '10px 16px', color: '#df514c', borderColor: 'rgba(223, 81, 76, 0.3)' }}
+            style={{ padding: '10px 16px', color: 'var(--loss-red)', borderColor: 'rgba(223, 81, 76, 0.25)' }}
             id="drawer-btn-delete"
           >
             <Trash2 size={13} />
@@ -261,8 +261,8 @@ function ChecklistItem({ label, value, accent, isBoolean }) {
         <span style={{
           fontSize: '11px',
           fontWeight: '700',
-          color: isYes ? '#2ebd85' : '#df514c',
-          background: isYes ? 'rgba(46, 189, 133, 0.1)' : 'rgba(223, 81, 76, 0.1)',
+          color: isYes ? 'var(--win-green)' : 'var(--loss-red)',
+          background: isYes ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
           padding: '2px 8px',
           borderRadius: '4px',
         }}>
