@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ReportPage from './components/report/ReportPage';
 import TradingReports from './components/report/TradingReports';
+import TradeCapital from './components/TradeCapital';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -75,6 +76,7 @@ export default function App() {
         <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)' }}>
           {activePage === 'dashboard' && <Dashboard />}
           {activePage === 'trades' && <ReportPage />}
+          {activePage === 'capital' && <TradeCapital />}
           {activePage === 'reports' && <TradingReports />}
         </main>
       </div>

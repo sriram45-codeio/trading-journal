@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, LayoutDashboard, List, LogOut, User, BarChart3 } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, List, LogOut, User, BarChart3, Wallet } from 'lucide-react';
 
 export default function Sidebar({ activePage, setActivePage, onLogout }) {
   const userEmail = localStorage.getItem('tj_email') || 'user@example.com';
@@ -110,6 +110,28 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
               >
                 <List className="w-4 h-4" />
                 <span>Report</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setActivePage('capital')}
+                style={getLinkStyle('capital')}
+                id="sidebar-tab-capital"
+                onMouseEnter={e => {
+                  if (activePage !== 'capital') {
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                    e.currentTarget.style.background = 'var(--bg-row-hover)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (activePage !== 'capital') {
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                    e.currentTarget.style.background = 'transparent';
+                  }
+                }}
+              >
+                <Wallet className="w-4 h-4" />
+                <span>Trade Capital</span>
               </button>
             </li>
             <li>
@@ -231,6 +253,18 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
         >
           <List className="w-5 h-5" />
           <span style={{ fontSize: '10px', fontWeight: '600' }}>Report</span>
+        </button>
+        <button
+          onClick={() => setActivePage('capital')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+            color: activePage === 'capital' ? 'var(--accent-color)' : 'var(--text-secondary)',
+            transition: 'color 0.2s', fontFamily: 'inherit',
+          }}
+        >
+          <Wallet className="w-5 h-5" />
+          <span style={{ fontSize: '10px', fontWeight: '600' }}>Capital</span>
         </button>
         <button
           onClick={() => setActivePage('reports')}

@@ -70,4 +70,130 @@ async function getSummary(req, res) {
   }
 }
 
-module.exports = { getSummary };
+async function getCapital(req, res) {
+  try {
+    const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
+    const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+    
+    const pnlRes = await db.query(
+      'SELECT COALESCE(SUM(net_pnl), 0) as total_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL',
+      [req.user.id]
+    );
+    const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl);
+    const currentBalance = parseFloat((startingCapital + totalNetPnl).toFixed(2));
+    
+    res.status(200).json({
+      starting_capital: startingCapital,
+      total_net_pnl: parseFloat(totalNetPnl.toFixed(2)),
+      current_balance: currentBalance
+    });
+  } catch (error) {
+    console.error('Get capital error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function updateCapital(req, res) {
+  try {
+    const { starting_capital } = req.body;
+    if (starting_capital === undefined || isNaN(parseFloat(starting_capital))) {
+      return res.status(400).json({ error: 'starting_capital must be a valid number' });
+    }
+    const capitalVal = parseFloat(starting_capital);
+    await db.query('UPDATE users SET starting_capital = $1 WHERE id = $2', [capitalVal, req.user.id]);
+    
+    const pnlRes = await db.query(
+      'SELECT COALESCE(SUM(net_pnl), 0) as total_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL',
+      [req.user.id]
+    );
+    const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl);
+    const currentBalance = parseFloat((capitalVal + totalNetPnl).toFixed(2));
+    
+    res.status(200).json({
+      starting_capital: capitalVal,
+      total_net_pnl: parseFloat(totalNetPnl.toFixed(2)),
+      current_balance: currentBalance
+    });
+  } catch (error) {
+    console.error('Update capital error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function getMonthlyReport(req, res) {
+  try {
+    const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
+    const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+    
+    const tradesRes = await db.query(
+      'SELECT * FROM trades WHERE user_id = $1 AND deleted_at IS NULL ORDER BY trade_date ASC, created_at ASC, id ASC',
+      [req.user.id]
+    );
+    
+    const trades = tradesRes.rows;
+    
+    const monthlyGroups = {};
+    let currentBalance = startingCapital;
+    
+    trades.forEach(t => {
+      currentBalance += parseFloat(t.net_pnl);
+      t.balance_after = parseFloat(currentBalance.toFixed(2));
+      
+      const dateStr = t.trade_date; // YYYY-MM-DD
+      const monthKey = dateStr.substring(0, 7); // "YYYY-MM"
+      
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = {
+          month: monthKey,
+          trades: [],
+          total_pnl: 0,
+          wins: 0,
+          losses: 0
+        };
+      }
+      
+      monthlyGroups[monthKey].trades.push(t);
+      monthlyGroups[monthKey].total_pnl += parseFloat(t.net_pnl);
+      if (t.outcome === 'WIN') {
+        monthlyGroups[monthKey].wins++;
+      } else {
+        monthlyGroups[monthKey].losses++;
+      }
+    });
+    
+    const sortedMonths = Object.keys(monthlyGroups).sort();
+    let runningStartingBalance = startingCapital;
+    
+    const reports = sortedMonths.map(monthKey => {
+      const group = monthlyGroups[monthKey];
+      const total_trades = group.trades.length;
+      const win_rate = total_trades > 0 ? parseFloat(((group.wins / total_trades) * 100).toFixed(2)) : 0.0;
+      
+      const starting_balance = parseFloat(runningStartingBalance.toFixed(2));
+      const ending_balance = parseFloat((starting_balance + group.total_pnl).toFixed(2));
+      
+      runningStartingBalance = ending_balance;
+      
+      const sortedTrades = [...group.trades].reverse();
+      
+      return {
+        month: monthKey,
+        total_trades,
+        wins: group.wins,
+        losses: group.losses,
+        win_rate,
+        total_net_pnl: parseFloat(group.total_pnl.toFixed(2)),
+        starting_balance,
+        ending_balance,
+        trades: sortedTrades
+      };
+    });
+    
+    res.status(200).json({ reports: reports.reverse() });
+  } catch (error) {
+    console.error('Get monthly report error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+module.exports = { getSummary, getCapital, updateCapital, getMonthlyReport };

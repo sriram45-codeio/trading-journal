@@ -63,7 +63,22 @@ const initDb = async () => {
       );
     `);
 
-    // 3. Create Indexes for optimization
+    // 3. Safe migration: add rr_ratio column if it doesn't exist
+    try {
+      await pool.query(`ALTER TABLE trades ADD COLUMN IF NOT EXISTS rr_ratio VARCHAR(10) DEFAULT '1:1';`);
+    } catch (migrationErr) {
+      // Column may already exist — safe to ignore
+      console.log('rr_ratio column migration skipped (already exists or error):', migrationErr.message);
+    }
+
+    // Safe migration: add starting_capital column to users table if it doesn't exist
+    try {
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS starting_capital NUMERIC(15, 2) DEFAULT 0.00;`);
+    } catch (migrationErr) {
+      console.log('starting_capital column migration skipped (already exists or error):', migrationErr.message);
+    }
+
+    // 4. Create Indexes for optimization
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_user_id ON trades(user_id);`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_date ON trades(trade_date);`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_outcome ON trades(outcome);`);

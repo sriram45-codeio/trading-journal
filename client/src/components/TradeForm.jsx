@@ -15,6 +15,7 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
     direction: 'BUY',
     result: 'TP',
     risk: '',
+    rr_ratio: '1:1',
     why_this_trade: '',
     emotion_mindset: '',
     mistake_improve: ''
@@ -34,6 +35,7 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
         direction: initialData.direction || 'BUY',
         result: initialData.result || 'TP',
         risk: initialData.risk !== undefined && initialData.risk !== null ? String(initialData.risk) : '',
+        rr_ratio: initialData.rr_ratio || '1:1',
         why_this_trade: initialData.why_this_trade || '',
         emotion_mindset: initialData.emotion_mindset || '',
         mistake_improve: initialData.mistake_improve || ''
@@ -279,9 +281,25 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                   name="risk" 
                   value={formData.risk} 
                   onChange={handleChange} 
-                  placeholder="e.g. 100" 
+                  placeholder="e.g. 10" 
                   className="kite-input" 
                   id="input-risk" 
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>6. Risk:Reward Ratio</label>
+                <CustomSelect
+                  name="rr_ratio"
+                  value={formData.rr_ratio}
+                  onChange={handleChange}
+                  options={[
+                    { value: '1:1', label: '1:1 Ratio', icon: '⚖️' },
+                    { value: '1:2', label: '1:2 Ratio', icon: '📈' },
+                    { value: '1:3', label: '1:3 Ratio', icon: '🚀' },
+                    { value: '1:4', label: '1:4 Ratio', icon: '🔥' },
+                    { value: '1:5', label: '1:5 Ratio', icon: '🏆' }
+                  ]}
+                  id="input-rr-ratio"
                 />
               </div>
             </div>

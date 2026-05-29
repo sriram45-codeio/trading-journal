@@ -1,9 +1,20 @@
 const db = require('../db/database');
 
+// Parse "1:2" → 2, "1:3" → 3, etc. Default to 1 if invalid.
+function parseRRMultiplier(rrStr) {
+  if (!rrStr) return 1;
+  const parts = String(rrStr).split(':');
+  if (parts.length === 2) {
+    const multiplier = parseFloat(parts[1]);
+    if (!isNaN(multiplier) && multiplier > 0) return multiplier;
+  }
+  return 1;
+}
+
 async function createTrade(req, res) {
   const {
     session, bias, key_level, key_level_tap, cisd,
-    trade_date, trade_time, direction, result, risk,
+    trade_date, trade_time, direction, result, risk, rr_ratio,
     why_this_trade, emotion_mindset, mistake_improve
   } = req.body;
 
@@ -17,18 +28,23 @@ async function createTrade(req, res) {
   const normalizedResult = result.toUpperCase() === 'TP' ? 'TP' : 'LOSS';
   const tapVal = ['YES', 'NO'].includes(String(key_level_tap).toUpperCase()) ? String(key_level_tap).toUpperCase() : 'NO';
   
-  // Calculate net_pnl from risk and result
+  // Validate rr_ratio — only allow valid ratios
+  const validRatios = ['1:1', '1:2', '1:3', '1:4', '1:5'];
+  const normalizedRR = validRatios.includes(rr_ratio) ? rr_ratio : '1:1';
+  const rrMultiplier = parseRRMultiplier(normalizedRR);
+  
+  // Calculate net_pnl from risk, result, and R:R ratio
   const riskVal = risk ? parseFloat(risk) : 0;
-  const net_pnl = normalizedResult === 'TP' ? Math.abs(riskVal) : -Math.abs(riskVal);
+  const net_pnl = normalizedResult === 'TP' ? Math.abs(riskVal) * rrMultiplier : -Math.abs(riskVal);
   const outcome = normalizedResult === 'TP' ? 'WIN' : 'LOSS';
 
   try {
     const insertResult = await db.query(`
       INSERT INTO trades (
         user_id, session, bias, key_level, key_level_tap, cisd,
-        trade_date, trade_time, direction, result, net_pnl, outcome, risk,
+        trade_date, trade_time, direction, result, net_pnl, outcome, risk, rr_ratio,
         why_this_trade, emotion_mindset, mistake_improve
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *
     `, [
       req.user.id,
@@ -44,6 +60,7 @@ async function createTrade(req, res) {
       net_pnl,
       outcome,
       riskVal || null,
+      normalizedRR,
       why_this_trade || null,
       emotion_mindset || null,
       mistake_improve || null
@@ -55,6 +72,25 @@ async function createTrade(req, res) {
     console.error('Create trade error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+}
+
+async function getRunningBalancesMap(userId) {
+  const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [userId]);
+  const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+
+  const tradesRes = await db.query(
+    'SELECT id, net_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL ORDER BY trade_date ASC, created_at ASC, id ASC',
+    [userId]
+  );
+
+  const balanceMap = {};
+  let currentBalance = startingCapital;
+  tradesRes.rows.forEach(t => {
+    currentBalance += parseFloat(t.net_pnl);
+    balanceMap[t.id] = parseFloat(currentBalance.toFixed(2));
+  });
+
+  return { startingCapital, balanceMap };
 }
 
 async function getAllTrades(req, res) {
@@ -78,10 +114,17 @@ async function getAllTrades(req, res) {
       params.push(outcome);
     }
 
-    query += ' ORDER BY trade_date DESC, created_at DESC';
+    query += ' ORDER BY trade_date DESC, created_at DESC, id DESC';
 
     const tradesRes = await db.query(query, params);
-    res.status(200).json({ trades: tradesRes.rows });
+    const { startingCapital, balanceMap } = await getRunningBalancesMap(req.user.id);
+    
+    const trades = tradesRes.rows.map(t => ({
+      ...t,
+      balance_after: balanceMap[t.id] !== undefined ? balanceMap[t.id] : startingCapital
+    }));
+
+    res.status(200).json({ trades });
   } catch (error) {
     console.error('Get trades error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -92,7 +135,7 @@ async function updateTrade(req, res) {
   const tradeId = req.params.id;
   const {
     session, bias, key_level, key_level_tap, cisd,
-    trade_date, trade_time, direction, result, risk,
+    trade_date, trade_time, direction, result, risk, rr_ratio,
     why_this_trade, emotion_mindset, mistake_improve
   } = req.body;
 
@@ -113,18 +156,23 @@ async function updateTrade(req, res) {
     const tapVal = key_level_tap ? (['YES', 'NO'].includes(String(key_level_tap).toUpperCase()) ? String(key_level_tap).toUpperCase() : 'NO') : existingTrade.key_level_tap;
     const riskVal = risk !== undefined ? (risk ? parseFloat(risk) : null) : existingTrade.risk;
     
-    // Recalculate net_pnl from risk and result
+    // Validate and normalize rr_ratio
+    const validRatios = ['1:1', '1:2', '1:3', '1:4', '1:5'];
+    const updatedRR = rr_ratio !== undefined ? (validRatios.includes(rr_ratio) ? rr_ratio : '1:1') : (existingTrade.rr_ratio || '1:1');
+    const rrMultiplier = parseRRMultiplier(updatedRR);
+    
+    // Recalculate net_pnl from risk, result, and R:R ratio
     const effectiveRisk = riskVal || 0;
-    const net_pnl = updatedResult === 'TP' ? Math.abs(effectiveRisk) : -Math.abs(effectiveRisk);
+    const net_pnl = updatedResult === 'TP' ? Math.abs(effectiveRisk) * rrMultiplier : -Math.abs(effectiveRisk);
     const outcome = updatedResult === 'TP' ? 'WIN' : 'LOSS';
 
     const updateResult = await db.query(`
       UPDATE trades SET
         session = $1, bias = $2, key_level = $3, key_level_tap = $4, cisd = $5,
-        trade_date = $6, trade_time = $7, direction = $8, result = $9, net_pnl = $10, outcome = $11, risk = $12,
-        why_this_trade = $13, emotion_mindset = $14, mistake_improve = $15,
+        trade_date = $6, trade_time = $7, direction = $8, result = $9, net_pnl = $10, outcome = $11, risk = $12, rr_ratio = $13,
+        why_this_trade = $14, emotion_mindset = $15, mistake_improve = $16,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $16 AND user_id = $17
+      WHERE id = $17 AND user_id = $18
       RETURNING *
     `, [
       session !== undefined ? session : existingTrade.session,
@@ -139,6 +187,7 @@ async function updateTrade(req, res) {
       net_pnl,
       outcome,
       riskVal,
+      updatedRR,
       why_this_trade !== undefined ? why_this_trade : existingTrade.why_this_trade,
       emotion_mindset !== undefined ? emotion_mindset : existingTrade.emotion_mindset,
       mistake_improve !== undefined ? mistake_improve : existingTrade.mistake_improve,
