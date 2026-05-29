@@ -76,7 +76,10 @@ async function createTrade(req, res) {
 
 async function getRunningBalancesMap(userId) {
   const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [userId]);
-  const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+  const rawCap = userRes.rows[0]?.starting_capital;
+  const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
+    ? parseFloat(rawCap) 
+    : 0.0;
 
   const tradesRes = await db.query(
     'SELECT id, net_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL ORDER BY trade_date ASC, created_at ASC, id ASC',

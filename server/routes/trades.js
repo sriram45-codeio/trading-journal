@@ -22,17 +22,19 @@ router.get('/export-pdf', async (req, res) => {
     const total_trades = trades.length;
 
     const win_rate = total_trades > 0 ? ((wins.length / total_trades) * 100).toFixed(2) : '0.00';
-    const total_net_pnl = trades.reduce((sum, t) => sum + t.net_pnl, 0).toFixed(2);
-    const avg_win_pnl = wins.length > 0 ? (wins.reduce((sum, t) => sum + t.net_pnl, 0) / wins.length).toFixed(2) : '0.00';
-    const avg_loss_pnl = losses.length > 0 ? (losses.reduce((sum, t) => sum + t.net_pnl, 0) / losses.length).toFixed(2) : '0.00';
+    const total_net_pnl = trades.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0).toFixed(2);
+    const avg_win_pnl = wins.length > 0 ? (wins.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0) / wins.length).toFixed(2) : '0.00';
+    const avg_loss_pnl = losses.length > 0 ? (losses.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0) / losses.length).toFixed(2) : '0.00';
     
     // Tap count as adherence metric
     const rules_followed_count = trades.filter(t => t.key_level_tap === 'YES').length;
     const rules_followed_rate = total_trades > 0 ? ((rules_followed_count / total_trades) * 100).toFixed(2) : '0.00';
 
-    // Get user starting capital to compute running balances
     const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
-    const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+    const rawCap = userRes.rows[0]?.starting_capital;
+    const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
+      ? parseFloat(rawCap) 
+      : 0.0;
 
     // Compute running balances chronologically
     const tradesAsc = [...trades].reverse();
@@ -143,9 +145,10 @@ router.get('/export-pdf', async (req, res) => {
       doc.font('Helvetica-Bold').fillColor(sideColor);
       doc.text(`${trade.direction}`, 360, entryY + 6);
       
-      const pnlSign = trade.net_pnl >= 0 ? '+' : '';
-      const pnlColor = trade.net_pnl > 0 ? '#2ebd85' : trade.net_pnl < 0 ? '#df514c' : '#888888';
-      doc.fillColor(pnlColor).text(`P&L: ${pnlSign}$${trade.net_pnl.toFixed(2)}`, 430, entryY + 6);
+      const parsedPnl = parseFloat(trade.net_pnl || 0);
+      const pnlSign = parsedPnl >= 0 ? '+' : '';
+      const pnlColor = parsedPnl > 0 ? '#2ebd85' : parsedPnl < 0 ? '#df514c' : '#888888';
+      doc.fillColor(pnlColor).text(`P&L: ${pnlSign}$${parsedPnl.toFixed(2)}`, 430, entryY + 6);
 
       let currentY = entryY + headerHeight + 8;
       doc.y = currentY;
@@ -220,7 +223,10 @@ router.get('/export-monthly-pdf', async (req, res) => {
     }
 
     const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
-    const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+    const rawCap = userRes.rows[0]?.starting_capital;
+    const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
+      ? parseFloat(rawCap) 
+      : 0.0;
 
     const allTradesRes = await db.query(
       'SELECT * FROM trades WHERE user_id = $1 AND deleted_at IS NULL ORDER BY trade_date ASC, created_at ASC, id ASC',
@@ -234,7 +240,20 @@ router.get('/export-monthly-pdf', async (req, res) => {
     let foundMonth = false;
 
     allTrades.forEach(t => {
-      const tMonth = t.trade_date.substring(0, 7);
+      let dateStr = "";
+      if (typeof t.trade_date === 'string') {
+        dateStr = t.trade_date;
+      } else if (t.trade_date instanceof Date) {
+        const year = t.trade_date.getFullYear();
+        const monthVal = String(t.trade_date.getMonth() + 1).padStart(2, '0');
+        const day = String(t.trade_date.getDate()).padStart(2, '0');
+        dateStr = `${year}-${monthVal}-${day}`;
+      } else if (t.trade_date) {
+        dateStr = String(t.trade_date);
+      } else {
+        dateStr = new Date().toISOString().substring(0, 10);
+      }
+      const tMonth = dateStr.substring(0, 7);
       if (tMonth === month && !foundMonth) {
         monthStartingBalance = runningBalance;
         foundMonth = true;
@@ -248,7 +267,22 @@ router.get('/export-monthly-pdf', async (req, res) => {
     }
 
     const monthTrades = allTrades
-      .filter(t => t.trade_date.substring(0, 7) === month)
+      .filter(t => {
+        let dateStr = "";
+        if (typeof t.trade_date === 'string') {
+          dateStr = t.trade_date;
+        } else if (t.trade_date instanceof Date) {
+          const year = t.trade_date.getFullYear();
+          const monthVal = String(t.trade_date.getMonth() + 1).padStart(2, '0');
+          const day = String(t.trade_date.getDate()).padStart(2, '0');
+          dateStr = `${year}-${monthVal}-${day}`;
+        } else if (t.trade_date) {
+          dateStr = String(t.trade_date);
+        } else {
+          dateStr = new Date().toISOString().substring(0, 10);
+        }
+        return dateStr.substring(0, 7) === month;
+      })
       .reverse();
 
     const wins = monthTrades.filter(t => t.outcome === 'WIN');
@@ -256,10 +290,10 @@ router.get('/export-monthly-pdf', async (req, res) => {
     const total_trades = monthTrades.length;
 
     const win_rate = total_trades > 0 ? ((wins.length / total_trades) * 100).toFixed(2) : '0.00';
-    const total_net_pnl = monthTrades.reduce((sum, t) => sum + t.net_pnl, 0).toFixed(2);
+    const total_net_pnl = monthTrades.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0).toFixed(2);
     const ending_balance = parseFloat((monthStartingBalance + parseFloat(total_net_pnl)).toFixed(2));
-    const avg_win_pnl = wins.length > 0 ? (wins.reduce((sum, t) => sum + t.net_pnl, 0) / wins.length).toFixed(2) : '0.00';
-    const avg_loss_pnl = losses.length > 0 ? (losses.reduce((sum, t) => sum + t.net_pnl, 0) / losses.length).toFixed(2) : '0.00';
+    const avg_win_pnl = wins.length > 0 ? (wins.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0) / wins.length).toFixed(2) : '0.00';
+    const avg_loss_pnl = losses.length > 0 ? (losses.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0) / losses.length).toFixed(2) : '0.00';
     
     const rules_followed_count = monthTrades.filter(t => t.key_level_tap === 'YES').length;
     const rules_followed_rate = total_trades > 0 ? ((rules_followed_count / total_trades) * 100).toFixed(2) : '0.00';
@@ -359,9 +393,10 @@ router.get('/export-monthly-pdf', async (req, res) => {
       doc.font('Helvetica-Bold').fillColor(sideColor);
       doc.text(`${trade.direction}`, 360, entryY + 6);
       
-      const pnlSign = trade.net_pnl >= 0 ? '+' : '';
-      const pnlColor = trade.net_pnl > 0 ? '#2ebd85' : trade.net_pnl < 0 ? '#df514c' : '#888888';
-      doc.fillColor(pnlColor).text(`P&L: ${pnlSign}$${trade.net_pnl.toFixed(2)}`, 430, entryY + 6);
+      const parsedPnl = parseFloat(trade.net_pnl || 0);
+      const pnlSign = parsedPnl >= 0 ? '+' : '';
+      const pnlColor = parsedPnl > 0 ? '#2ebd85' : parsedPnl < 0 ? '#df514c' : '#888888';
+      doc.fillColor(pnlColor).text(`P&L: ${pnlSign}$${parsedPnl.toFixed(2)}`, 430, entryY + 6);
 
       let currentY = entryY + headerHeight + 8;
       doc.y = currentY;
@@ -513,8 +548,9 @@ router.get('/:id/export-pdf', async (req, res) => {
 
     const isWin = trade.outcome === 'WIN';
     const sideColor = trade.direction === 'BUY' ? '#4184f3' : '#df514c';
-    const pnlColor = trade.net_pnl > 0 ? '#2ebd85' : trade.net_pnl < 0 ? '#df514c' : '#888888';
-    const pnlSign = trade.net_pnl >= 0 ? '+' : '';
+    const parsedPnl = parseFloat(trade.net_pnl || 0);
+    const pnlColor = parsedPnl > 0 ? '#2ebd85' : parsedPnl < 0 ? '#df514c' : '#888888';
+    const pnlSign = parsedPnl >= 0 ? '+' : '';
 
     drawItem('Trade Date:', trade.trade_date, false, '', '#FFFFFF', 320, startY + 36);
     drawItem('Trade Time (IST):', trade.trade_time || '—', false, '', '#FFFFFF', 320, startY + 54);
@@ -537,7 +573,7 @@ router.get('/:id/export-pdf', async (req, res) => {
 
     doc.fillColor('#FFFFFF').font('Helvetica').fontSize(9.5).text('NET PROFIT / LOSS:', 60, pnlBannerY + 22);
     doc.fillColor(pnlColor).font('Helvetica-Bold').fontSize(20).text(
-      `${pnlSign}$${trade.net_pnl.toFixed(2)}`,
+      `${pnlSign}$${parsedPnl.toFixed(2)}`,
       200,
       pnlBannerY + 16
     );

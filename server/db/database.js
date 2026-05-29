@@ -63,19 +63,31 @@ const initDb = async () => {
       );
     `);
 
-    // 3. Safe migration: add rr_ratio column if it doesn't exist
+    // 3. Safe migrations by checking information_schema
     try {
-      await pool.query(`ALTER TABLE trades ADD COLUMN IF NOT EXISTS rr_ratio VARCHAR(10) DEFAULT '1:1';`);
+      const tradeCols = await pool.query(`
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'trades' AND column_name = 'rr_ratio'
+      `);
+      if (tradeCols.rows.length === 0) {
+        await pool.query(`ALTER TABLE trades ADD COLUMN rr_ratio VARCHAR(10) DEFAULT '1:1';`);
+        console.log('Added rr_ratio column to trades table.');
+      }
     } catch (migrationErr) {
-      // Column may already exist — safe to ignore
-      console.log('rr_ratio column migration skipped (already exists or error):', migrationErr.message);
+      console.log('rr_ratio column migration failed:', migrationErr.message);
     }
 
-    // Safe migration: add starting_capital column to users table if it doesn't exist
     try {
-      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS starting_capital NUMERIC(15, 2) DEFAULT 0.00;`);
+      const userCols = await pool.query(`
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'starting_capital'
+      `);
+      if (userCols.rows.length === 0) {
+        await pool.query(`ALTER TABLE users ADD COLUMN starting_capital NUMERIC(15, 2) DEFAULT 0.00;`);
+        console.log('Added starting_capital column to users table.');
+      }
     } catch (migrationErr) {
-      console.log('starting_capital column migration skipped (already exists or error):', migrationErr.message);
+      console.log('starting_capital column migration failed:', migrationErr.message);
     }
 
     // 4. Create Indexes for optimization

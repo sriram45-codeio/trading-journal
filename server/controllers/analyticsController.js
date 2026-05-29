@@ -25,14 +25,14 @@ async function getSummary(req, res) {
     const total_losses = losses.length;
 
     const win_rate = total_trades > 0 ? ((total_wins / total_trades) * 100).toFixed(2) : 0;
-    const total_net_pnl = trades.reduce((sum, t) => sum + t.net_pnl, 0).toFixed(2);
+    const total_net_pnl = trades.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0).toFixed(2);
 
     const avg_win_pnl = total_wins > 0
-      ? (wins.reduce((s, t) => s + t.net_pnl, 0) / total_wins).toFixed(2)
+      ? (wins.reduce((s, t) => s + parseFloat(t.net_pnl || 0), 0) / total_wins).toFixed(2)
       : 0;
 
     const avg_loss_pnl = total_losses > 0
-      ? (losses.reduce((s, t) => s + t.net_pnl, 0) / total_losses).toFixed(2)
+      ? (losses.reduce((s, t) => s + parseFloat(t.net_pnl || 0), 0) / total_losses).toFixed(2)
       : 0;
 
     // Use key_level_tap === 'YES' as our "discipline / rules followed" metric!
@@ -44,7 +44,7 @@ async function getSummary(req, res) {
     const tradesByDate = {};
     trades.forEach(t => {
       if (!tradesByDate[t.trade_date]) tradesByDate[t.trade_date] = 0;
-      tradesByDate[t.trade_date] += t.net_pnl;
+      tradesByDate[t.trade_date] += parseFloat(t.net_pnl || 0);
     });
 
     const sortedDates = Object.keys(tradesByDate).sort();
@@ -73,7 +73,10 @@ async function getSummary(req, res) {
 async function getCapital(req, res) {
   try {
     const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
-    const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+    const rawCap = userRes.rows[0]?.starting_capital;
+    const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
+      ? parseFloat(rawCap) 
+      : 0.0;
     
     const pnlRes = await db.query(
       'SELECT COALESCE(SUM(net_pnl), 0) as total_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL',
@@ -123,7 +126,10 @@ async function updateCapital(req, res) {
 async function getMonthlyReport(req, res) {
   try {
     const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
-    const startingCapital = userRes.rows[0]?.starting_capital ? parseFloat(userRes.rows[0].starting_capital) : 0.0;
+    const rawCap = userRes.rows[0]?.starting_capital;
+    const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
+      ? parseFloat(rawCap) 
+      : 0.0;
     
     const tradesRes = await db.query(
       'SELECT * FROM trades WHERE user_id = $1 AND deleted_at IS NULL ORDER BY trade_date ASC, created_at ASC, id ASC',
@@ -139,7 +145,19 @@ async function getMonthlyReport(req, res) {
       currentBalance += parseFloat(t.net_pnl);
       t.balance_after = parseFloat(currentBalance.toFixed(2));
       
-      const dateStr = t.trade_date; // YYYY-MM-DD
+      let dateStr = "";
+      if (typeof t.trade_date === 'string') {
+        dateStr = t.trade_date;
+      } else if (t.trade_date instanceof Date) {
+        const year = t.trade_date.getFullYear();
+        const month = String(t.trade_date.getMonth() + 1).padStart(2, '0');
+        const day = String(t.trade_date.getDate()).padStart(2, '0');
+        dateStr = `${year}-${month}-${day}`;
+      } else if (t.trade_date) {
+        dateStr = String(t.trade_date);
+      } else {
+        dateStr = new Date().toISOString().substring(0, 10);
+      }
       const monthKey = dateStr.substring(0, 7); // "YYYY-MM"
       
       if (!monthlyGroups[monthKey]) {
