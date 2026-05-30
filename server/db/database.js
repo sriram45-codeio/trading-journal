@@ -125,7 +125,13 @@ if (USE_PG) {
 
 } else {
   // ─── SQLite Mode (Local Development) ───
-  const Database = require('better-sqlite3');
+  let Database;
+  try {
+    Database = require('better-sqlite3');
+  } catch (e) {
+    console.error('CRITICAL: SQLite is required for local development. Run: npm install better-sqlite3');
+    throw e;
+  }
 
   const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '..', 'trading_journal.db');
   const db = new Database(DB_PATH);

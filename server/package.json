@@ -18,8 +18,5 @@
     "jsonwebtoken": "^9.0.2",
     "pdfkit": "^0.14.0",
     "pg": "^8.11.3"
-  },
-  "optionalDependencies": {
-    "better-sqlite3": "^12.10.0"
   }
 }
