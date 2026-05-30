@@ -27,7 +27,8 @@ export default function TradeCapital() {
       setTrades(tradesRes.data.trades);
     } catch (err) {
       console.error('Error fetching capital data:', err);
-      setError('Failed to load capital and trade details. Please try again.');
+      const serverMsg = err.response?.data?.error || err.message || 'Unknown error';
+      setError(`Failed to load capital data: ${serverMsg}`);
     } finally {
       setLoading(false);
     }
@@ -39,8 +40,9 @@ export default function TradeCapital() {
 
   const handleUpdateCapital = async (e) => {
     e.preventDefault();
-    if (!newCapital || isNaN(parseFloat(newCapital)) || parseFloat(newCapital) < 0) {
-      setError('Please enter a valid starting capital amount.');
+    const parsed = parseFloat(newCapital);
+    if (isNaN(parsed) || parsed < 0) {
+      setError('Please enter a valid non-negative starting capital amount.');
       return;
     }
 
@@ -58,7 +60,8 @@ export default function TradeCapital() {
       setTrades(tradesRes.data.trades);
     } catch (err) {
       console.error('Error updating capital:', err);
-      setError('Failed to update starting capital. Please try again.');
+      const serverMsg = err.response?.data?.error || err.message || 'Unknown error';
+      setError(`Failed to update starting capital: ${serverMsg}`);
     } finally {
       setSubmitting(false);
     }
@@ -78,8 +81,24 @@ export default function TradeCapital() {
     );
   }
 
-  const pnlPos = capitalData.total_net_pnl > 0;
-  const pnlNeg = capitalData.total_net_pnl < 0;
+  const startingCapital = Number(capitalData?.starting_capital ?? 0);
+  const totalNetPnl = Number(capitalData?.total_net_pnl ?? 0);
+  const currentBalance = Number(capitalData?.current_balance ?? 0);
+
+  const pnlPos = totalNetPnl > 0;
+  const pnlNeg = totalNetPnl < 0;
+
+  // Sort trades chronologically (oldest first) to assign sequential trade numbers
+  const chronologicalTrades = [...trades].sort((a, b) => {
+    const dateA = new Date(a.trade_date + (a.trade_time ? 'T' + a.trade_time : 'T00:00:00'));
+    const dateB = new Date(b.trade_date + (b.trade_time ? 'T' + b.trade_time : 'T00:00:00'));
+    if (dateA - dateB !== 0) return dateA - dateB;
+    return a.id - b.id;
+  });
+  const tradeNumberMap = {};
+  chronologicalTrades.forEach((t, i) => {
+    tradeNumberMap[t.id] = i + 1;
+  });
 
   return (
     <div style={{ padding: '24px 30px', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -141,7 +160,7 @@ export default function TradeCapital() {
             <div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Initial Capital</div>
               <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginTop: '2px' }}>
-                ${capitalData.starting_capital.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${startingCapital.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
           </div>
@@ -218,7 +237,7 @@ export default function TradeCapital() {
               <Wallet size={16} color="var(--text-muted)" />
             </div>
             <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-              ${capitalData.starting_capital.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${startingCapital.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>Base funding account size</div>
           </div>
@@ -239,7 +258,7 @@ export default function TradeCapital() {
               fontFamily: 'monospace',
               color: pnlPos ? 'var(--win-green)' : pnlNeg ? 'var(--loss-red)' : 'var(--text-muted)'
             }}>
-              {pnlPos ? '+' : ''}${capitalData.total_net_pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {pnlPos ? '+' : ''}${totalNetPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
               Cumulative returns of {trades.length} trade{trades.length !== 1 ? 's' : ''}
@@ -253,7 +272,7 @@ export default function TradeCapital() {
               <DollarSign size={16} color="var(--accent-color)" />
             </div>
             <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-              ${capitalData.current_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>Available capital balance</div>
           </div>
@@ -282,7 +301,7 @@ export default function TradeCapital() {
               <thead>
                 <tr style={{ borderBottom: '1.5px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-muted)', fontWeight: '700' }}>
                   <th style={{ padding: '12px 16px' }}>Date</th>
-                  <th style={{ padding: '12px 16px' }}>Trade ID</th>
+                  <th style={{ padding: '12px 16px' }}>Trade No</th>
                   <th style={{ padding: '12px 16px' }}>Asset Details</th>
                   <th style={{ padding: '12px 16px' }}>Direction</th>
                   <th style={{ padding: '12px 16px', textAlign: 'right' }}>Risk ($)</th>
@@ -301,7 +320,7 @@ export default function TradeCapital() {
                   return (
                     <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s ease' }} className="table-row-hover">
                       <td style={{ padding: '14px 16px', fontWeight: '600' }}>{trade.trade_date}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontWeight: '500' }}>#{trade.id}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: '700' }}>Trade {tradeNumberMap[trade.id] || '—'}</td>
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                           <span style={{ background: 'rgba(255, 87, 34, 0.08)', color: 'var(--accent-color)', padding: '1px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: '600', border: '1px solid rgba(255, 87, 34, 0.2)' }}>

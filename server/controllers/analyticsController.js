@@ -72,17 +72,31 @@ async function getSummary(req, res) {
 
 async function getCapital(req, res) {
   try {
-    const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
-    const rawCap = userRes.rows[0]?.starting_capital;
-    const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
-      ? parseFloat(rawCap) 
-      : 0.0;
+    let startingCapital = 0.0;
+    
+    try {
+      const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
+      const rawCap = userRes.rows[0]?.starting_capital;
+      startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
+        ? parseFloat(rawCap) 
+        : 0.0;
+    } catch (colErr) {
+      console.error('getCapital SELECT failed, column may not exist:', colErr.message);
+      // Column might not exist — add it and return 0
+      try {
+        await db.query('ALTER TABLE users ADD COLUMN starting_capital NUMERIC(15, 2) DEFAULT 0.00');
+        console.log('Added starting_capital column on-the-fly');
+      } catch (alterErr) {
+        console.log('ALTER TABLE result:', alterErr.message);
+      }
+      startingCapital = 0.0;
+    }
     
     const pnlRes = await db.query(
       'SELECT COALESCE(SUM(net_pnl), 0) as total_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL',
       [req.user.id]
     );
-    const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl);
+    const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl || 0);
     const currentBalance = parseFloat((startingCapital + totalNetPnl).toFixed(2));
     
     res.status(200).json({
@@ -91,25 +105,42 @@ async function getCapital(req, res) {
       current_balance: currentBalance
     });
   } catch (error) {
-    console.error('Get capital error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Get capital error:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to get capital: ' + error.message });
   }
 }
 
 async function updateCapital(req, res) {
   try {
     const { starting_capital } = req.body;
-    if (starting_capital === undefined || isNaN(parseFloat(starting_capital))) {
+    console.log('updateCapital called with body:', req.body, 'user:', req.user?.id);
+    
+    if (starting_capital === undefined || starting_capital === null || isNaN(parseFloat(starting_capital))) {
       return res.status(400).json({ error: 'starting_capital must be a valid number' });
     }
     const capitalVal = parseFloat(starting_capital);
-    await db.query('UPDATE users SET starting_capital = $1 WHERE id = $2', [capitalVal, req.user.id]);
+    
+    // Try to update; if column doesn't exist, create it first
+    try {
+      await db.query('UPDATE users SET starting_capital = $1 WHERE id = $2', [capitalVal, req.user.id]);
+    } catch (updateErr) {
+      console.error('UPDATE starting_capital failed, attempting to add column:', updateErr.message);
+      // Column might not exist on this database — add it and retry
+      try {
+        await db.query('ALTER TABLE users ADD COLUMN starting_capital NUMERIC(15, 2) DEFAULT 0.00');
+      } catch (alterErr) {
+        // Column might already exist in another schema — ignore
+        console.log('ALTER TABLE result:', alterErr.message);
+      }
+      // Retry the update
+      await db.query('UPDATE users SET starting_capital = $1 WHERE id = $2', [capitalVal, req.user.id]);
+    }
     
     const pnlRes = await db.query(
       'SELECT COALESCE(SUM(net_pnl), 0) as total_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL',
       [req.user.id]
     );
-    const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl);
+    const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl || 0);
     const currentBalance = parseFloat((capitalVal + totalNetPnl).toFixed(2));
     
     res.status(200).json({
@@ -118,8 +149,8 @@ async function updateCapital(req, res) {
       current_balance: currentBalance
     });
   } catch (error) {
-    console.error('Update capital error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Update capital error:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to update capital: ' + error.message });
   }
 }
 

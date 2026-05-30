@@ -27,6 +27,12 @@ export default function TradingReports() {
   const [monthlyExporting, setMonthlyExporting] = useState({});
   const pollRef = useRef(null);
 
+  const [selectedMonthKey, setSelectedMonthKey] = useState(null); // Drill-down active month
+
+  useEffect(() => {
+    setSelectedMonthKey(null);
+  }, [activeReportTab]);
+
   const fetchAll = useCallback(async (showRefresh = false) => {
     if (showRefresh) setIsRefreshing(true);
     try {
@@ -62,6 +68,26 @@ export default function TradingReports() {
   }, [fetchAll]);
 
   const filteredTrades = sessionFilter ? trades.filter(t => t.session === sessionFilter) : trades;
+
+  // Compile all trades from monthly reports (which contains all trades in the system)
+  // and sort them chronologically to compute absolute trade rank.
+  const allTradesFromMonths = [];
+  monthlyReports.forEach(m => {
+    if (m.trades) allTradesFromMonths.push(...m.trades);
+  });
+  
+  // Sort oldest first
+  allTradesFromMonths.sort((a, b) => {
+    const dateA = new Date(a.trade_date + (a.trade_time ? 'T' + a.trade_time : 'T00:00:00'));
+    const dateB = new Date(b.trade_date + (b.trade_time ? 'T' + b.trade_time : 'T00:00:00'));
+    if (dateA - dateB !== 0) return dateA - dateB;
+    return a.id - b.id;
+  });
+  
+  const tradeNumberMap = {};
+  allTradesFromMonths.forEach((t, index) => {
+    tradeNumberMap[t.id] = index + 1;
+  });
 
   const handleExportPdf = async () => {
     setExportingPdf(true);
@@ -279,7 +305,7 @@ export default function TradingReports() {
                 <thead>
                   <tr style={{ borderBottom: '1.5px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-muted)', fontWeight: '700' }}>
                     <th style={{ padding: '10px 16px' }}>Date</th>
-                    <th style={{ padding: '10px 16px' }}>ID</th>
+                    <th style={{ padding: '10px 16px' }}>Trade No</th>
                     <th style={{ padding: '10px 16px' }}>Session</th>
                     <th style={{ padding: '10px 16px' }}>Asset / Setup</th>
                     <th style={{ padding: '10px 16px' }}>Direction</th>
@@ -300,7 +326,7 @@ export default function TradingReports() {
                     return (
                       <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }} className="table-row-hover">
                         <td style={{ padding: '10px 16px', fontWeight: '600' }}>{trade.trade_date}</td>
-                        <td style={{ padding: '10px 16px', color: 'var(--text-muted)' }}>#{trade.id}</td>
+                        <td style={{ padding: '10px 16px', color: 'var(--text-primary)', fontWeight: '700' }}>Trade {tradeNumberMap[trade.id] || '—'}</td>
                         <td style={{ padding: '10px 16px' }}>
                           <span style={{ background: 'rgba(255, 87, 34, 0.08)', color: 'var(--accent-color)', padding: '1px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: '600', border: '1px solid rgba(255, 87, 34, 0.2)' }}>
                             {trade.session || 'London'}
@@ -374,18 +400,98 @@ export default function TradingReports() {
               <p style={{ color: 'var(--text-primary)', fontSize: '13.5px', margin: '0 0 6px', fontWeight: '700' }}>No monthly report logs generated</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0 }}>Trades will be grouped by month automatically once logged.</p>
             </div>
+          ) : !selectedMonthKey ? (
+            /* Menu structure showing each month summary as a row */
+            <div style={{ overflowX: 'auto', background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: 'var(--radius-card)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1.5px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-muted)', fontWeight: '700' }}>
+                    <th style={{ padding: '12px 16px' }}>Month</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>Total Trades</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>Wins / Losses</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>Win Rate</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Starting Balance</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Ending Balance</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Net P&L</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyReports.map((monthRep) => {
+                    const isMonthProfit = monthRep.total_net_pnl >= 0;
+                    const monthPnlColor = isMonthProfit ? 'var(--win-green)' : 'var(--loss-red)';
+                    return (
+                      <tr key={monthRep.month} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }} className="table-row-hover">
+                        <td style={{ padding: '14px 16px', fontWeight: '800', color: 'var(--accent-color)' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Calendar size={14} />
+                            {formatMonthName(monthRep.month)}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '600', color: 'var(--text-primary)' }}>
+                          {monthRep.total_trades} Trades
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                          <span style={{ color: 'var(--win-green)', fontWeight: '600' }}>{monthRep.wins}W</span> · <span style={{ color: 'var(--loss-red)', fontWeight: '600' }}>{monthRep.losses}L</span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <span style={{
+                            display: 'inline-flex', padding: '2px 8px', borderRadius: 'var(--radius-badge)',
+                            fontSize: '11px', fontWeight: '800',
+                            background: monthRep.win_rate >= 50 ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+                            color: monthRep.win_rate >= 50 ? 'var(--win-green)' : 'var(--loss-red)',
+                            border: `1px solid ${monthRep.win_rate >= 50 ? 'rgba(0, 162, 124, 0.2)' : 'rgba(223, 81, 76, 0.2)'}`
+                          }}>
+                            {monthRep.win_rate}%
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                          ${monthRep.starting_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '600', color: 'var(--text-primary)' }}>
+                          ${monthRep.ending_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '800', color: monthPnlColor }}>
+                          {monthRep.total_net_pnl > 0 ? '+' : ''}${monthRep.total_net_pnl.toFixed(2)}
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <button
+                            onClick={() => setSelectedMonthKey(monthRep.month)}
+                            className="kite-btn kite-btn-ghost"
+                            style={{
+                              width: '28px', height: '28px', borderRadius: '50%',
+                              padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              margin: '0 auto', color: 'var(--accent-color)', border: '1px solid var(--border-color)'
+                            }}
+                            title="View Monthly Trades"
+                          >
+                            <Eye size={12} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            monthlyReports.map((monthRep) => {
+            /* Month Drill-Down Detail View (Table Format) */
+            (() => {
+              const monthRep = monthlyReports.find(r => r.month === selectedMonthKey);
+              if (!monthRep) return null;
               const isMonthProfit = monthRep.total_net_pnl >= 0;
               const monthPnlColor = isMonthProfit ? 'var(--win-green)' : 'var(--loss-red)';
               
               return (
-                <div key={monthRep.month} style={{
+                <div style={{
                   background: 'var(--bg-card)',
                   border: '1.5px solid var(--border-color)',
                   borderRadius: 'var(--radius-card)',
                   overflow: 'hidden',
-                  boxShadow: '0 3px 10px rgba(0,0,0,0.04)'
+                  boxShadow: '0 3px 10px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0
                 }}>
                   {/* Month header row */}
                   <div style={{
@@ -398,11 +504,24 @@ export default function TradingReports() {
                     flexWrap: 'wrap',
                     gap: '12px'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Calendar size={18} style={{ color: 'var(--accent-color)' }} />
-                      <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                        {formatMonthName(monthRep.month)} Summary
-                      </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <button
+                        onClick={() => setSelectedMonthKey(null)}
+                        className="kite-btn kite-btn-ghost"
+                        style={{
+                          padding: '6px 12px', fontSize: '12px', fontWeight: '700',
+                          border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '6px'
+                        }}
+                      >
+                        ← Back to Months
+                      </button>
+                      <div style={{ width: '1px', height: '20px', background: 'var(--border-color)' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Calendar size={18} style={{ color: 'var(--accent-color)' }} />
+                        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                          {formatMonthName(monthRep.month)} Summary & Logs
+                        </h3>
+                      </div>
                     </div>
                     
                     <button
@@ -447,21 +566,23 @@ export default function TradingReports() {
                     </div>
                   </div>
 
-                  {/* Month Trades list */}
+                  {/* Month Trades list in table format */}
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-muted)', fontWeight: '600' }}>
-                          <th style={{ padding: '8px 16px' }}>Date</th>
-                          <th style={{ padding: '8px 16px' }}>ID</th>
-                          <th style={{ padding: '8px 16px' }}>Setup Details</th>
-                          <th style={{ padding: '8px 16px' }}>Direction</th>
-                          <th style={{ padding: '8px 16px', textAlign: 'right' }}>Risk ($)</th>
-                          <th style={{ padding: '8px 16px', textAlign: 'center' }}>R:R</th>
-                          <th style={{ padding: '8px 16px', textAlign: 'center' }}>Outcome</th>
-                          <th style={{ padding: '8px 16px', textAlign: 'right' }}>Net P&L</th>
-                          <th style={{ padding: '8px 16px', textAlign: 'right' }}>Account Balance</th>
-                          <th style={{ padding: '8px 16px', textAlign: 'center' }}>View</th>
+                          <th style={{ padding: '10px 16px' }}>Trade No</th>
+                          <th style={{ padding: '10px 16px' }}>Date</th>
+                          <th style={{ padding: '10px 16px' }}>Time</th>
+                          <th style={{ padding: '10px 16px' }}>Session</th>
+                          <th style={{ padding: '10px 16px' }}>Asset / Setup</th>
+                          <th style={{ padding: '10px 16px' }}>Direction</th>
+                          <th style={{ padding: '10px 16px', textAlign: 'right' }}>Risk ($)</th>
+                          <th style={{ padding: '10px 16px', textAlign: 'center' }}>R:R</th>
+                          <th style={{ padding: '10px 16px', textAlign: 'center' }}>Outcome</th>
+                          <th style={{ padding: '10px 16px', textAlign: 'right' }}>Net P&L</th>
+                          <th style={{ padding: '10px 16px', textAlign: 'right' }}>Account Balance</th>
+                          <th style={{ padding: '10px 16px', textAlign: 'center' }}>View</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -472,25 +593,29 @@ export default function TradingReports() {
                           
                           return (
                             <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }} className="table-row-hover">
-                              <td style={{ padding: '8px 16px', fontWeight: '600' }}>{trade.trade_date}</td>
-                              <td style={{ padding: '8px 16px', color: 'var(--text-muted)' }}>#{trade.id}</td>
-                              <td style={{ padding: '8px 16px' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>
-                                  {trade.session} · {trade.bias} {trade.key_level ? `(${trade.key_level})` : ''}
+                              <td style={{ padding: '12px 16px', fontWeight: '700', color: 'var(--text-primary)' }}>Trade {tradeNumberMap[trade.id] || '—'}</td>
+                              <td style={{ padding: '12px 16px', fontWeight: '600' }}>{trade.trade_date}</td>
+                              <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{trade.trade_time || '—'}</td>
+                              <td style={{ padding: '12px 16px' }}>
+                                <span style={{ background: 'rgba(255, 87, 34, 0.08)', color: 'var(--accent-color)', padding: '1px 8px', borderRadius: '99px', fontSize: '9.5px', fontWeight: '600', border: '1px solid rgba(255, 87, 34, 0.2)' }}>
+                                  {trade.session || '—'}
                                 </span>
                               </td>
-                              <td style={{ padding: '8px 16px' }}>
+                              <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: '500' }}>
+                                {trade.bias} {trade.key_level ? `| ${trade.key_level}` : ''}
+                              </td>
+                              <td style={{ padding: '12px 16px' }}>
                                 <span style={{ color: isBuy ? 'var(--buy-blue)' : 'var(--sell-red)', fontWeight: '700', fontSize: '10.5px' }}>
                                   {trade.direction}
                                 </span>
                               </td>
-                              <td style={{ padding: '8px 16px', textAlign: 'right', fontFamily: 'monospace' }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace' }}>
                                 ${trade.risk != null ? trade.risk.toFixed(0) : '0'}
                               </td>
-                              <td style={{ padding: '8px 16px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>
                                 {trade.rr_ratio || '1:1'}
                               </td>
-                              <td style={{ padding: '8px 16px', textAlign: 'center' }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                                 <span style={{
                                   display: 'inline-flex', padding: '1px 5px', borderRadius: '4px',
                                   fontSize: '9px', fontWeight: '800',
@@ -501,13 +626,13 @@ export default function TradingReports() {
                                   {trade.outcome}
                                 </span>
                               </td>
-                              <td style={{ padding: '8px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '700', color: pnlColor }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '700', color: pnlColor }}>
                                 {trade.net_pnl > 0 ? '+' : ''}${trade.net_pnl.toFixed(2)}
                               </td>
-                              <td style={{ padding: '8px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '700', color: 'var(--text-primary)' }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '700', color: 'var(--text-primary)' }}>
                                 ${trade.balance_after ? trade.balance_after.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
                               </td>
-                              <td style={{ padding: '8px 16px', textAlign: 'center' }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                                 <button
                                   onClick={() => setSelectedTrade(trade)}
                                   className="kite-btn kite-btn-ghost"
@@ -530,7 +655,7 @@ export default function TradingReports() {
 
                 </div>
               );
-            })
+            })()
           )}
         </div>
       )}

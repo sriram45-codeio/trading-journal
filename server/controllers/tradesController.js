@@ -28,9 +28,9 @@ async function createTrade(req, res) {
   const normalizedResult = result.toUpperCase() === 'TP' ? 'TP' : 'LOSS';
   const tapVal = ['YES', 'NO'].includes(String(key_level_tap).toUpperCase()) ? String(key_level_tap).toUpperCase() : 'NO';
   
-  // Validate rr_ratio — only allow valid ratios
-  const validRatios = ['1:1', '1:2', '1:3', '1:4', '1:5'];
-  const normalizedRR = validRatios.includes(rr_ratio) ? rr_ratio : '1:1';
+  // Validate rr_ratio — allow any positive numeric ratio format e.g. 1:X where X is positive
+  const isValidRR = rr_ratio && /^1:\d+(\.\d+)?$/.test(String(rr_ratio));
+  const normalizedRR = isValidRR ? String(rr_ratio) : '1:1';
   const rrMultiplier = parseRRMultiplier(normalizedRR);
   
   // Calculate net_pnl from risk, result, and R:R ratio
@@ -159,9 +159,12 @@ async function updateTrade(req, res) {
     const tapVal = key_level_tap ? (['YES', 'NO'].includes(String(key_level_tap).toUpperCase()) ? String(key_level_tap).toUpperCase() : 'NO') : existingTrade.key_level_tap;
     const riskVal = risk !== undefined ? (risk ? parseFloat(risk) : null) : existingTrade.risk;
     
-    // Validate and normalize rr_ratio
-    const validRatios = ['1:1', '1:2', '1:3', '1:4', '1:5'];
-    const updatedRR = rr_ratio !== undefined ? (validRatios.includes(rr_ratio) ? rr_ratio : '1:1') : (existingTrade.rr_ratio || '1:1');
+    // Validate and normalize rr_ratio — allow any positive numeric ratio format e.g. 1:X where X is positive
+    let updatedRR = existingTrade.rr_ratio || '1:1';
+    if (rr_ratio !== undefined) {
+      const isValidRR = rr_ratio && /^1:\d+(\.\d+)?$/.test(String(rr_ratio));
+      updatedRR = isValidRR ? String(rr_ratio) : '1:1';
+    }
     const rrMultiplier = parseRRMultiplier(updatedRR);
     
     // Recalculate net_pnl from risk, result, and R:R ratio

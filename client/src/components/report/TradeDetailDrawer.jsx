@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { X, BookOpen, Brain, ShieldAlert, Pencil, Trash2, Calendar, Clock, TrendingUp, BarChart3, Target, Activity, Download } from 'lucide-react';
 import api from '../../api/axios';
 
-export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) {
+export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit, onDelete }) {
   const handleDownloadPdf = async () => {
     try {
       const response = await api.get(`/trades/${trade.id}/export-pdf`, { responseType: 'blob' });
@@ -52,7 +52,7 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-              Trade Detail
+              Trade Details
             </span>
             <span style={{
               fontSize: '11px',
@@ -63,7 +63,7 @@ export default function TradeDetailDrawer({ trade, onClose, onEdit, onDelete }) 
               padding: '2px 8px',
               borderRadius: '4px',
             }}>
-              #{trade.id}
+              Trade {tradeNumber || `#${trade.id}`}
             </span>
           </div>
           <button

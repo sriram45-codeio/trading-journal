@@ -2,7 +2,7 @@ import React from 'react';
 import { Eye, Pencil, Trash2, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight, Download } from 'lucide-react';
 import api from '../../api/axios';
 
-export default function TradeCard({ trade, index, isExpanded, onToggleExpand, onView, onEdit, onDelete }) {
+export default function TradeCard({ trade, index, tradeNumber, isExpanded, onToggleExpand, onView, onEdit, onDelete }) {
   const handleDownloadPdf = async (e) => {
     e.stopPropagation();
     try {
@@ -77,6 +77,12 @@ export default function TradeCard({ trade, index, isExpanded, onToggleExpand, on
           {/* Date, Time, Session, Bias */}
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '13.5px', fontWeight: '800', color: 'var(--accent-color)' }}>
+                Trade {tradeNumber}
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>
+                ·
+              </span>
               <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
                 {trade.trade_date}
               </span>

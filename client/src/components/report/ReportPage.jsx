@@ -325,18 +325,33 @@ export default function ReportPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {filteredTrades.map((trade, index) => (
-            <TradeCard
-              key={trade.id}
-              trade={trade}
-              index={index}
-              isExpanded={expandedTradeId === trade.id}
-              onToggleExpand={(id) => setExpandedTradeId(expandedTradeId === id ? null : id)}
-              onView={(t) => setViewingTrade(t)}
-              onEdit={(t) => setEditingTrade(t)}
-              onDelete={(t) => setDeletingTrade(t)}
-            />
-          ))}
+          {(() => {
+            // Sort trades chronologically (oldest first) to assign sequential trade numbers
+            const chronologicalTrades = [...trades].sort((a, b) => {
+              const dateA = new Date(a.trade_date + (a.trade_time ? 'T' + a.trade_time : 'T00:00:00'));
+              const dateB = new Date(b.trade_date + (b.trade_time ? 'T' + b.trade_time : 'T00:00:00'));
+              if (dateA - dateB !== 0) return dateA - dateB;
+              return a.id - b.id;
+            });
+            const tradeNumberMap = {};
+            chronologicalTrades.forEach((t, i) => {
+              tradeNumberMap[t.id] = i + 1;
+            });
+
+            return filteredTrades.map((trade, index) => (
+              <TradeCard
+                key={trade.id}
+                trade={trade}
+                index={index}
+                tradeNumber={tradeNumberMap[trade.id] || index + 1}
+                isExpanded={expandedTradeId === trade.id}
+                onToggleExpand={(id) => setExpandedTradeId(expandedTradeId === id ? null : id)}
+                onView={(t) => setViewingTrade(t)}
+                onEdit={(t) => setEditingTrade(t)}
+                onDelete={(t) => setDeletingTrade(t)}
+              />
+            ));
+          })()}
 
           {/* Footer */}
           <div style={{
@@ -356,14 +371,28 @@ export default function ReportPage() {
       )}
 
       {/* ── Drawers & Modals ── */}
-      {viewingTrade && (
-        <TradeDetailDrawer
-          trade={viewingTrade}
-          onClose={() => setViewingTrade(null)}
-          onEdit={(t) => { setViewingTrade(null); setEditingTrade(t); }}
-          onDelete={(t) => { setViewingTrade(null); setDeletingTrade(t); }}
-        />
-      )}
+      {viewingTrade && (() => {
+        const chronologicalTrades = [...trades].sort((a, b) => {
+          const dateA = new Date(a.trade_date + (a.trade_time ? 'T' + a.trade_time : 'T00:00:00'));
+          const dateB = new Date(b.trade_date + (b.trade_time ? 'T' + b.trade_time : 'T00:00:00'));
+          if (dateA - dateB !== 0) return dateA - dateB;
+          return a.id - b.id;
+        });
+        const tradeNumberMap = {};
+        chronologicalTrades.forEach((t, i) => {
+          tradeNumberMap[t.id] = i + 1;
+        });
+
+        return (
+          <TradeDetailDrawer
+            trade={viewingTrade}
+            tradeNumber={tradeNumberMap[viewingTrade.id]}
+            onClose={() => setViewingTrade(null)}
+            onEdit={(t) => { setViewingTrade(null); setEditingTrade(t); }}
+            onDelete={(t) => { setViewingTrade(null); setDeletingTrade(t); }}
+          />
+        );
+      })()}
       {editingTrade && (
         <EditModal
           trade={editingTrade}
