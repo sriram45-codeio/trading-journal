@@ -6,7 +6,7 @@ async function getSummary(req, res) {
       'SELECT * FROM trades WHERE user_id = $1 AND deleted_at IS NULL ORDER BY trade_date ASC',
       [req.user.id]
     );
-    
+
     const trades = tradesRes.rows;
     const total_trades = trades.length;
 
@@ -73,12 +73,12 @@ async function getSummary(req, res) {
 async function getCapital(req, res) {
   try {
     let startingCapital = 0.0;
-    
+
     try {
       const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
       const rawCap = userRes.rows[0]?.starting_capital;
-      startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
-        ? parseFloat(rawCap) 
+      startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap)))
+        ? parseFloat(rawCap)
         : 0.0;
     } catch (colErr) {
       console.error('getCapital SELECT failed, column may not exist:', colErr.message);
@@ -91,14 +91,14 @@ async function getCapital(req, res) {
       }
       startingCapital = 0.0;
     }
-    
+
     const pnlRes = await db.query(
       'SELECT COALESCE(SUM(net_pnl), 0) as total_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL',
       [req.user.id]
     );
     const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl || 0);
     const currentBalance = parseFloat((startingCapital + totalNetPnl).toFixed(2));
-    
+
     res.status(200).json({
       starting_capital: startingCapital,
       total_net_pnl: parseFloat(totalNetPnl.toFixed(2)),
@@ -114,12 +114,12 @@ async function updateCapital(req, res) {
   try {
     const { starting_capital } = req.body;
     console.log('updateCapital called with body:', req.body, 'user:', req.user?.id);
-    
+
     if (starting_capital === undefined || starting_capital === null || isNaN(parseFloat(starting_capital))) {
       return res.status(400).json({ error: 'starting_capital must be a valid number' });
     }
     const capitalVal = parseFloat(starting_capital);
-    
+
     // Try to update; if column doesn't exist, create it first
     try {
       await db.query('UPDATE users SET starting_capital = $1 WHERE id = $2', [capitalVal, req.user.id]);
@@ -135,14 +135,14 @@ async function updateCapital(req, res) {
       // Retry the update
       await db.query('UPDATE users SET starting_capital = $1 WHERE id = $2', [capitalVal, req.user.id]);
     }
-    
+
     const pnlRes = await db.query(
       'SELECT COALESCE(SUM(net_pnl), 0) as total_pnl FROM trades WHERE user_id = $1 AND deleted_at IS NULL',
       [req.user.id]
     );
     const totalNetPnl = parseFloat(pnlRes.rows[0].total_pnl || 0);
     const currentBalance = parseFloat((capitalVal + totalNetPnl).toFixed(2));
-    
+
     res.status(200).json({
       starting_capital: capitalVal,
       total_net_pnl: parseFloat(totalNetPnl.toFixed(2)),
@@ -158,24 +158,24 @@ async function getMonthlyReport(req, res) {
   try {
     const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
     const rawCap = userRes.rows[0]?.starting_capital;
-    const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap))) 
-      ? parseFloat(rawCap) 
+    const startingCapital = (rawCap !== null && rawCap !== undefined && !isNaN(parseFloat(rawCap)))
+      ? parseFloat(rawCap)
       : 0.0;
-    
+
     const tradesRes = await db.query(
       'SELECT * FROM trades WHERE user_id = $1 AND deleted_at IS NULL ORDER BY trade_date ASC, created_at ASC, id ASC',
       [req.user.id]
     );
-    
+
     const trades = tradesRes.rows;
-    
+
     const monthlyGroups = {};
     let currentBalance = startingCapital;
-    
+
     trades.forEach(t => {
       currentBalance += parseFloat(t.net_pnl);
       t.balance_after = parseFloat(currentBalance.toFixed(2));
-      
+
       let dateStr = "";
       if (typeof t.trade_date === 'string') {
         dateStr = t.trade_date;
@@ -190,7 +190,7 @@ async function getMonthlyReport(req, res) {
         dateStr = new Date().toISOString().substring(0, 10);
       }
       const monthKey = dateStr.substring(0, 7); // "YYYY-MM"
-      
+
       if (!monthlyGroups[monthKey]) {
         monthlyGroups[monthKey] = {
           month: monthKey,
@@ -200,7 +200,7 @@ async function getMonthlyReport(req, res) {
           losses: 0
         };
       }
-      
+
       monthlyGroups[monthKey].trades.push(t);
       monthlyGroups[monthKey].total_pnl += parseFloat(t.net_pnl);
       if (t.outcome === 'WIN') {
@@ -209,22 +209,22 @@ async function getMonthlyReport(req, res) {
         monthlyGroups[monthKey].losses++;
       }
     });
-    
+
     const sortedMonths = Object.keys(monthlyGroups).sort();
     let runningStartingBalance = startingCapital;
-    
+
     const reports = sortedMonths.map(monthKey => {
       const group = monthlyGroups[monthKey];
       const total_trades = group.trades.length;
       const win_rate = total_trades > 0 ? parseFloat(((group.wins / total_trades) * 100).toFixed(2)) : 0.0;
-      
+
       const starting_balance = parseFloat(runningStartingBalance.toFixed(2));
       const ending_balance = parseFloat((starting_balance + group.total_pnl).toFixed(2));
-      
+
       runningStartingBalance = ending_balance;
-      
+
       const sortedTrades = [...group.trades].reverse();
-      
+
       return {
         month: monthKey,
         total_trades,
@@ -237,7 +237,7 @@ async function getMonthlyReport(req, res) {
         trades: sortedTrades
       };
     });
-    
+
     res.status(200).json({ reports: reports.reverse() });
   } catch (error) {
     console.error('Get monthly report error:', error);

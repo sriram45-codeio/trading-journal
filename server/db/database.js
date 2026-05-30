@@ -1,116 +1,275 @@
-const { Pool, types } = require('pg');
+/**
+ * Dual-mode database layer:
+ * - Uses PostgreSQL when DATABASE_URL env var is set (production/cloud)
+ * - Falls back to SQLite for local development (zero setup)
+ */
 
-// Convert Postgres NUMERIC columns (returned as strings by default) to standard JS floats
-types.setTypeParser(types.builtins.NUMERIC, (value) => parseFloat(value));
+const path = require('path');
 
-// Return Postgres DATE columns as raw string (YYYY-MM-DD) instead of JS Date objects
-types.setTypeParser(types.builtins.DATE, (value) => value);
+const DATABASE_URL = process.env.DATABASE_URL;
+const USE_PG = !!DATABASE_URL;
 
-const isProduction = process.env.NODE_ENV === 'production';
+let queryFn;
+let initDbFn;
 
-// Establish connection pool to PostgreSQL (e.g., Neon or local pg)
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/trading_journal',
-  ssl: isProduction ? { rejectUnauthorized: false } : false
-});
+if (USE_PG) {
+  // ─── PostgreSQL Mode ───
+  const { Pool, types } = require('pg');
 
-// Test connection
-pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database pool.');
-});
+  // Convert Postgres NUMERIC columns to JS floats
+  types.setTypeParser(types.builtins.NUMERIC, (value) => parseFloat(value));
+  // Return Postgres DATE columns as raw string (YYYY-MM-DD)
+  types.setTypeParser(types.builtins.DATE, (value) => value);
 
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle PostgreSQL client:', err);
-});
+  const isProduction = process.env.NODE_ENV === 'production';
 
-// Asynchronous schema initialization
-const initDb = async () => {
-  try {
-    // 1. Create Users Table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+  const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: isProduction ? { rejectUnauthorized: false } : false
+  });
 
-    // 2. Create Trades Table (Note: DROP TABLE is completely removed to protect live data!)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS trades (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        session VARCHAR(100),
-        bias VARCHAR(100),
-        key_level VARCHAR(255),
-        key_level_tap VARCHAR(10) CHECK(key_level_tap IN ('YES','NO')),
-        cisd VARCHAR(255),
-        trade_date DATE NOT NULL,
-        trade_time TIME,
-        direction VARCHAR(10) CHECK(direction IN ('BUY','SELL')),
-        result VARCHAR(10) CHECK(result IN ('TP','LOSS')),
-        net_pnl NUMERIC(15, 2) NOT NULL DEFAULT 0,
-        outcome VARCHAR(10) CHECK(outcome IN ('WIN','LOSS')),
-        risk NUMERIC(15, 2),
-        why_this_trade TEXT,
-        emotion_mindset TEXT,
-        mistake_improve TEXT,
-        deleted_at TIMESTAMP DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+  pool.on('connect', () => {
+    console.log('[PostgreSQL] Connected to database pool.');
+  });
 
-    // 3. Safe migrations — add columns if missing (schema-aware for hosted Postgres like Neon)
+  pool.on('error', (err) => {
+    console.error('[PostgreSQL] Unexpected error on idle client:', err);
+  });
+
+  queryFn = (text, params) => pool.query(text, params);
+
+  initDbFn = async () => {
     try {
-      const tradeCols = await pool.query(`
-        SELECT column_name FROM information_schema.columns 
-        WHERE table_schema = current_schema() AND table_name = 'trades' AND column_name = 'rr_ratio'
+      // 1. Create Users Table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          starting_capital NUMERIC(15, 2) DEFAULT 0.00,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
       `);
-      if (tradeCols.rows.length === 0) {
-        await pool.query(`ALTER TABLE trades ADD COLUMN rr_ratio VARCHAR(10) DEFAULT '1:1';`);
-        console.log('Added rr_ratio column to trades table.');
+
+      // 2. Create Trades Table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS trades (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          session VARCHAR(100),
+          bias VARCHAR(100),
+          key_level VARCHAR(255),
+          key_level_tap VARCHAR(10) CHECK(key_level_tap IN ('YES','NO')),
+          cisd VARCHAR(255),
+          trade_date DATE NOT NULL,
+          trade_time TIME,
+          direction VARCHAR(10) CHECK(direction IN ('BUY','SELL')),
+          result VARCHAR(10) CHECK(result IN ('TP','LOSS')),
+          net_pnl NUMERIC(15, 2) NOT NULL DEFAULT 0,
+          outcome VARCHAR(10) CHECK(outcome IN ('WIN','LOSS')),
+          risk NUMERIC(15, 2),
+          rr_ratio VARCHAR(10) DEFAULT '1:1',
+          why_this_trade TEXT,
+          emotion_mindset TEXT,
+          mistake_improve TEXT,
+          deleted_at TIMESTAMP DEFAULT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // 3. Safe migrations — add columns if missing
+      try {
+        const tradeCols = await pool.query(`
+          SELECT column_name FROM information_schema.columns 
+          WHERE table_schema = current_schema() AND table_name = 'trades' AND column_name = 'rr_ratio'
+        `);
+        if (tradeCols.rows.length === 0) {
+          await pool.query(`ALTER TABLE trades ADD COLUMN rr_ratio VARCHAR(10) DEFAULT '1:1';`);
+          console.log('[PostgreSQL] Added rr_ratio column to trades table.');
+        }
+      } catch (migrationErr) {
+        if (!migrationErr.message.includes('already exists')) {
+          console.log('[PostgreSQL] rr_ratio migration:', migrationErr.message);
+        }
       }
-    } catch (migrationErr) {
-      // Column may already exist — safe to ignore "already exists" errors
-      if (!migrationErr.message.includes('already exists')) {
-        console.log('rr_ratio column migration failed:', migrationErr.message);
+
+      try {
+        const userCols = await pool.query(`
+          SELECT column_name FROM information_schema.columns 
+          WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'starting_capital'
+        `);
+        if (userCols.rows.length === 0) {
+          await pool.query(`ALTER TABLE users ADD COLUMN starting_capital NUMERIC(15, 2) DEFAULT 0.00;`);
+          console.log('[PostgreSQL] Added starting_capital column to users table.');
+        }
+      } catch (migrationErr) {
+        if (!migrationErr.message.includes('already exists')) {
+          console.log('[PostgreSQL] starting_capital migration:', migrationErr.message);
+        }
       }
+
+      // 4. Create Indexes
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_user_id ON trades(user_id);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_date ON trades(trade_date);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_outcome ON trades(outcome);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_deleted_at ON trades(deleted_at);`);
+
+      console.log('[PostgreSQL] Database tables initialized/verified.');
+    } catch (err) {
+      console.error('[PostgreSQL] Schema initialization error:', err);
+      throw err;
     }
+  };
+
+} else {
+  // ─── SQLite Mode (Local Development) ───
+  const Database = require('better-sqlite3');
+
+  const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '..', 'trading_journal.db');
+  const db = new Database(DB_PATH);
+
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+
+  console.log(`[SQLite] Connected to database at: ${DB_PATH}`);
+
+  // Compatibility layer: pg-like query() interface
+  queryFn = (text, params = []) => {
+    let sqliteText = text;
+
+    // Replace $N placeholders with ?
+    sqliteText = sqliteText.replace(/\$(\d+)/g, () => '?');
+
+    // ILIKE -> LIKE
+    sqliteText = sqliteText.replace(/ILIKE/gi, 'LIKE');
+
+    // Remove trailing semicolons
+    sqliteText = sqliteText.trim().replace(/;+$/, '');
+
+    const isSelect = /^\s*(SELECT|PRAGMA)/i.test(sqliteText);
+    const hasReturning = /RETURNING\s+/i.test(sqliteText);
+
+    // Build ordered params from $N references
+    const orderedParams = [];
+    const matches = [...text.matchAll(/\$(\d+)/g)];
+    matches.forEach(m => {
+      const pgIndex = parseInt(m[1]) - 1;
+      orderedParams.push(params[pgIndex] !== undefined ? params[pgIndex] : null);
+    });
 
     try {
-      const userCols = await pool.query(`
-        SELECT column_name FROM information_schema.columns 
-        WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'starting_capital'
-      `);
-      if (userCols.rows.length === 0) {
-        await pool.query(`ALTER TABLE users ADD COLUMN starting_capital NUMERIC(15, 2) DEFAULT 0.00;`);
-        console.log('Added starting_capital column to users table.');
+      if (hasReturning) {
+        const sqlWithoutReturning = sqliteText.replace(/\s+RETURNING\s+.+$/i, '');
+        const stmt = db.prepare(sqlWithoutReturning);
+        const result = stmt.run(...orderedParams);
+
+        let tableName = '';
+        const insertMatch = sqlWithoutReturning.match(/INSERT\s+INTO\s+(\w+)/i);
+        const updateMatch = sqlWithoutReturning.match(/UPDATE\s+(\w+)/i);
+
+        if (insertMatch) {
+          tableName = insertMatch[1];
+          const row = db.prepare(`SELECT * FROM ${tableName} WHERE id = ?`).get(result.lastInsertRowid);
+          return { rows: row ? [row] : [], rowCount: result.changes };
+        } else if (updateMatch) {
+          tableName = updateMatch[1];
+          const whereMatch = sqlWithoutReturning.match(/WHERE\s+(.+)$/i);
+          if (whereMatch) {
+            const selectSql = `SELECT * FROM ${tableName} WHERE ${whereMatch[1]}`;
+            const totalQuestions = [...sqlWithoutReturning.matchAll(/\?/g)].length;
+            const whereQuestions = [...(`WHERE ${whereMatch[1]}`).matchAll(/\?/g)].length;
+            const whereParams = orderedParams.slice(totalQuestions - whereQuestions);
+            const row = db.prepare(selectSql).get(...whereParams);
+            return { rows: row ? [row] : [], rowCount: result.changes };
+          }
+          return { rows: [], rowCount: result.changes };
+        }
+        return { rows: [], rowCount: result.changes };
+      } else if (isSelect) {
+        const stmt = db.prepare(sqliteText);
+        const rows = stmt.all(...orderedParams);
+        return { rows };
+      } else {
+        const stmt = db.prepare(sqliteText);
+        const result = stmt.run(...orderedParams);
+        return { rows: [], rowCount: result.changes, lastInsertRowid: result.lastInsertRowid };
       }
-    } catch (migrationErr) {
-      // Column may already exist — safe to ignore "already exists" errors
-      if (!migrationErr.message.includes('already exists')) {
-        console.log('starting_capital column migration failed:', migrationErr.message);
-      }
+    } catch (err) {
+      console.error('[SQLite] Query error:', err.message);
+      console.error('[SQLite] SQL:', sqliteText);
+      console.error('[SQLite] Params:', orderedParams);
+      throw err;
     }
+  };
 
-    // 4. Create Indexes for optimization
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_user_id ON trades(user_id);`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_date ON trades(trade_date);`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_outcome ON trades(outcome);`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_trades_deleted_at ON trades(deleted_at);`);
+  initDbFn = async () => {
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          starting_capital REAL DEFAULT 0.00,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
 
-    console.log('PostgreSQL database tables initialized/verified.');
-  } catch (err) {
-    console.error('Error during PostgreSQL schema initialization:', err);
-    throw err;
-  }
-};
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS trades (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          session TEXT,
+          bias TEXT,
+          key_level TEXT,
+          key_level_tap TEXT CHECK(key_level_tap IN ('YES','NO')),
+          cisd TEXT,
+          trade_date TEXT NOT NULL,
+          trade_time TEXT,
+          direction TEXT CHECK(direction IN ('BUY','SELL')),
+          result TEXT CHECK(result IN ('TP','LOSS')),
+          net_pnl REAL NOT NULL DEFAULT 0,
+          outcome TEXT CHECK(outcome IN ('WIN','LOSS')),
+          risk REAL,
+          rr_ratio TEXT DEFAULT '1:1',
+          why_this_trade TEXT,
+          emotion_mindset TEXT,
+          mistake_improve TEXT,
+          deleted_at DATETIME DEFAULT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // Safe migrations
+      const tradeColumns = db.prepare("PRAGMA table_info(trades)").all();
+      const tradeColNames = tradeColumns.map(c => c.name);
+      if (!tradeColNames.includes('rr_ratio')) {
+        db.exec("ALTER TABLE trades ADD COLUMN rr_ratio TEXT DEFAULT '1:1';");
+      }
+
+      const userColumns = db.prepare("PRAGMA table_info(users)").all();
+      const userColNames = userColumns.map(c => c.name);
+      if (!userColNames.includes('starting_capital')) {
+        db.exec("ALTER TABLE users ADD COLUMN starting_capital REAL DEFAULT 0.00;");
+      }
+
+      db.exec("CREATE INDEX IF NOT EXISTS idx_trades_user_id ON trades(user_id);");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_trades_date ON trades(trade_date);");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_trades_outcome ON trades(outcome);");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_trades_deleted_at ON trades(deleted_at);");
+
+      console.log('[SQLite] Database tables initialized/verified.');
+    } catch (err) {
+      console.error('[SQLite] Schema initialization error:', err);
+      throw err;
+    }
+  };
+}
 
 module.exports = {
-  query: (text, params) => pool.query(text, params),
-  initDb,
-  pool
+  query: queryFn,
+  initDb: initDbFn
 };
