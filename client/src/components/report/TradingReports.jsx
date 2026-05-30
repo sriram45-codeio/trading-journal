@@ -51,7 +51,10 @@ export default function TradingReports() {
       setMonthlyReports(monthlyRes.data.reports || []);
       setLastUpdated(Date.now());
     } catch (err) {
-      setToast({ message: 'Failed to load report data', type: 'error' });
+      console.error('Failed to load report data:', err);
+      const urlInfo = err.config?.url ? ` [URL: ${err.config.url}]` : '';
+      const errMsg = err.response?.data?.error || err.message || 'Unknown error';
+      setToast({ message: `Failed to load report data: ${errMsg}${urlInfo}`, type: 'error' });
     } finally {
       setLoading(false);
       setIsRefreshing(false);
