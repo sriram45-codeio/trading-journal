@@ -32,11 +32,20 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Mount routes with and without /api prefix for maximum robustness in production environments
 app.use('/api/auth', authRouter);
+app.use('/auth', authRouter);
+
 app.use('/api/trades', tradesRouter);
+app.use('/trades', tradesRouter);
+
 app.use('/api/analytics', analyticsRouter);
+app.use('/analytics', analyticsRouter);
 
 app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });
 
