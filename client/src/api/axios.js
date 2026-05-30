@@ -2,6 +2,11 @@ import axios from 'axios';
 
 let baseURL = import.meta.env.VITE_API_URL || '/api';
 
+// Auto-detect production Vercel environments and connect to the live Render backend URL
+if (typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app')) {
+  baseURL = 'https://trading-journal-xys2.onrender.com/api';
+}
+
 // Robust URL check: if configured with host but lacks '/api' suffix, append it.
 if (baseURL && baseURL.startsWith('http')) {
   const trimmed = baseURL.replace(/\/+$/, '');
