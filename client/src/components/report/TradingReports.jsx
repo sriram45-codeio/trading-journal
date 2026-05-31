@@ -11,7 +11,7 @@ import Toast from '../Toast';
 const POLL_INTERVAL = 30000;
 
 export default function TradingReports() {
-  const [activeReportTab, setActiveReportTab] = useState('overall'); // 'overall' or 'monthly'
+  const [activeReportTab, setActiveReportTab] = useState('menu'); // 'menu', 'overall', or 'monthly'
   const [trades, setTrades] = useState([]);
   const [monthlyReports, setMonthlyReports] = useState([]);
   const [analytics, setAnalytics] = useState(null);
@@ -146,13 +146,13 @@ export default function TradingReports() {
 
   const pnlColor = analytics?.total_net_pnl >= 0 ? 'var(--win-green)' : 'var(--loss-red)';
 
-  return (
-    <div style={{ padding: '24px 30px', maxWidth: '1250px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
+  if (activeReportTab === 'menu') {
+    return (
+      <div style={{ padding: '24px 30px', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        
+        {/* Page Header */}
+        <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '36px', height: '36px', borderRadius: 'var(--radius-btn)',
@@ -163,11 +163,143 @@ export default function TradingReports() {
             }}>
               <FileText size={18} />
             </div>
-            <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>Trading Performance Reports</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>Reports Directories</h2>
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 46px' }}>
-            View comprehensive trade performance reports and export summaries to PDF
+          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '4px 0 0 46px' }}>
+            Select a specialized report module directory to view your performance data and exports.
           </p>
+        </div>
+
+        {/* Modules Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '24px',
+          marginTop: '12px'
+        }}>
+          {/* Card 1: Overall Log */}
+          <div 
+            onClick={() => setActiveReportTab('overall')}
+            style={moduleCardStyle}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--accent-color)';
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 87, 34, 0.08)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border-color)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+              <div style={moduleIconWrapperStyle}>
+                <BarChart3 size={24} color="var(--accent-color)" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                  Overall Performance Log
+                </h3>
+                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  Analyze your cumulative trading performance. View total trades, net P&L, overall win rate, and verify trading rules/discipline. Features detailed trade list logs and complete PDF report exports.
+                </p>
+                <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '700', color: 'var(--accent-color)' }}>
+                  Open Module Directory →
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Monthly Log */}
+          <div 
+            onClick={() => setActiveReportTab('monthly')}
+            style={moduleCardStyle}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--accent-color)';
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 87, 34, 0.08)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border-color)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+              <div style={moduleIconWrapperStyle}>
+                <Calendar size={24} color="var(--accent-color)" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                  Monthly Trade Report
+                </h3>
+                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  Analyze trade outcomes grouped by calendar month. Dive deep into monthly starting and ending balances, net monthly outcomes, win ratios, and drill down directly into individual calendar month log sheets.
+                </p>
+                <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '700', color: 'var(--accent-color)' }}>
+                  Open Module Directory →
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '24px 30px', maxWidth: '1250px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* Sleek Navigation Sub-Header */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        borderBottom: '1px solid var(--border-color)', 
+        paddingBottom: '16px', 
+        flexWrap: 'wrap', 
+        gap: '12px' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => {
+              setActiveReportTab('menu');
+              setSelectedMonthKey(null);
+            }}
+            className="kite-btn kite-btn-ghost"
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: '700',
+              border: '1px solid var(--border-color)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: 'var(--radius-btn)'
+            }}
+          >
+            ← Back to Reports Menu
+          </button>
+          <div style={{ width: '1.5px', height: '22px', background: 'var(--border-color)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              background: 'rgba(255, 87, 34, 0.08)',
+              border: '1px solid rgba(255, 87, 34, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent-color)'
+            }}>
+              {activeReportTab === 'overall' ? <BarChart3 size={14} /> : <Calendar size={14} />}
+            </div>
+            <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+              {activeReportTab === 'overall' ? 'Overall Performance Log' : 'Monthly Trade Report'}
+            </h2>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -191,34 +323,6 @@ export default function TradingReports() {
             </button>
           )}
         </div>
-      </div>
-
-      {/* Tab Segment Controls */}
-      <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)', width: 'fit-content' }}>
-        <button
-          onClick={() => setActiveReportTab('overall')}
-          style={{
-            padding: '8px 20px', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '700',
-            cursor: 'pointer', background: activeReportTab === 'overall' ? 'var(--bg-card)' : 'transparent',
-            color: activeReportTab === 'overall' ? 'var(--accent-color)' : 'var(--text-muted)',
-            boxShadow: activeReportTab === 'overall' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-            transition: 'all 0.2s ease', fontFamily: 'inherit'
-          }}
-        >
-          Overall Report Log
-        </button>
-        <button
-          onClick={() => setActiveReportTab('monthly')}
-          style={{
-            padding: '8px 20px', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '700',
-            cursor: 'pointer', background: activeReportTab === 'monthly' ? 'var(--bg-card)' : 'transparent',
-            color: activeReportTab === 'monthly' ? 'var(--accent-color)' : 'var(--text-muted)',
-            boxShadow: activeReportTab === 'monthly' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-            transition: 'all 0.2s ease', fontFamily: 'inherit'
-          }}
-        >
-          Monthly Trade Report
-        </button>
       </div>
 
       {/* Tab 1: Overall Report Log */}
@@ -834,4 +938,25 @@ const monthStatLabelStyle = {
   fontWeight: '700',
   textTransform: 'uppercase',
   letterSpacing: '0.04em'
+};
+
+const moduleCardStyle = {
+  background: 'var(--bg-card)',
+  border: '1.5px solid var(--border-color)',
+  borderRadius: 'var(--radius-card)',
+  padding: '24px',
+  cursor: 'pointer',
+  transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+};
+
+const moduleIconWrapperStyle = {
+  background: 'rgba(255, 87, 34, 0.06)',
+  border: '1px solid rgba(255, 87, 34, 0.15)',
+  padding: '12px',
+  borderRadius: '12px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0
 };

@@ -57,7 +57,7 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
             </div>
             <div>
               <h1 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.3px' }}>
-                TRADING JOURNAL
+                FOREXFLOW
               </h1>
               <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: '2px 0 0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Premium Suite

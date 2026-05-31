@@ -56,7 +56,7 @@ export default function AuthScreen({ onAuthSuccess }) {
               </svg>
             </div>
             <span style={{ fontSize: '21px', fontWeight: '700', color: 'var(--text-primary)', letterSpacing: '-0.4px' }}>
-              Trading Journal
+              ForexFlow
             </span>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '500' }}>Track. Analyze. Improve.</p>

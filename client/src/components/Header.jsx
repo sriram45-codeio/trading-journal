@@ -37,7 +37,7 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
           </svg>
         </div>
         <span style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-          Journal
+          ForexFlow
         </span>
       </div>
 
