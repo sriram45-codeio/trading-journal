@@ -160,6 +160,19 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{trade.trade_date}</span>
                       {trade.trade_time && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trade.trade_time}</span>}
+                      {trade.screenshot && (
+                        <span 
+                          style={{ marginLeft: '4px', cursor: 'pointer', fontSize: '11px', background: 'rgba(255, 87, 34, 0.1)', border: '1px solid rgba(255, 87, 34, 0.25)', color: 'var(--accent-color)', padding: '1px 5px', borderRadius: '4px' }} 
+                          title="Click to view trade screenshot"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const win = window.open();
+                            win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                          }}
+                        >
+                          📸 View Image
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
                       {trade.session && (

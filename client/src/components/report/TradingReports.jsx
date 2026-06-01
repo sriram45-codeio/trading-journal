@@ -430,7 +430,22 @@ export default function TradingReports() {
                     return (
                       <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }} className="table-row-hover">
                         <td style={{ padding: '6px 12px', fontWeight: '600' }}>{trade.trade_date}</td>
-                        <td style={{ padding: '6px 12px', color: 'var(--text-primary)', fontWeight: '700' }}>Trade {tradeNumberMap[trade.id] || '—'}</td>
+                        <td style={{ padding: '6px 12px', color: 'var(--text-primary)', fontWeight: '700' }}>
+                          Trade {tradeNumberMap[trade.id] || '—'}
+                          {trade.screenshot && (
+                            <span 
+                              style={{ marginLeft: '8px', cursor: 'pointer', fontSize: '11px', background: 'rgba(255, 87, 34, 0.1)', border: '1px solid rgba(255, 87, 34, 0.25)', color: 'var(--accent-color)', padding: '1px 5px', borderRadius: '4px' }} 
+                              title="Click to view trade screenshot"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const win = window.open();
+                                win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                              }}
+                            >
+                              📸 View Image
+                            </span>
+                          )}
+                        </td>
                         <td style={{ padding: '6px 12px' }}>
                           <span style={{ background: 'rgba(255, 87, 34, 0.08)', color: 'var(--accent-color)', padding: '1px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: '600', border: '1px solid rgba(255, 87, 34, 0.2)' }}>
                             {trade.session || 'London'}
@@ -697,7 +712,22 @@ export default function TradingReports() {
                           
                           return (
                             <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }} className="table-row-hover">
-                              <td style={{ padding: '6px 12px', fontWeight: '700', color: 'var(--text-primary)' }}>Trade {tradeNumberMap[trade.id] || '—'}</td>
+                              <td style={{ padding: '6px 12px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                Trade {tradeNumberMap[trade.id] || '—'}
+                                {trade.screenshot && (
+                                  <span 
+                                    style={{ marginLeft: '8px', cursor: 'pointer', fontSize: '11px', background: 'rgba(255, 87, 34, 0.1)', border: '1px solid rgba(255, 87, 34, 0.25)', color: 'var(--accent-color)', padding: '1px 5px', borderRadius: '4px' }} 
+                                    title="Click to view trade screenshot"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const win = window.open();
+                                      win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                                    }}
+                                  >
+                                    📸 View Image
+                                  </span>
+                                )}
+                              </td>
                               <td style={{ padding: '6px 12px', fontWeight: '600' }}>{trade.trade_date}</td>
                               <td style={{ padding: '6px 12px', color: 'var(--text-secondary)' }}>{trade.trade_time || '—'}</td>
                               <td style={{ padding: '6px 12px' }}>
