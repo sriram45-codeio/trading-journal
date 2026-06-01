@@ -192,18 +192,21 @@ router.get('/export-pdf', async (req, res) => {
       if (trade.screenshot) {
         checkPageBreak(160);
         try {
-          const matches = trade.screenshot.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
-          if (matches && matches.length === 3) {
-            const imageBuffer = Buffer.from(matches[2], 'base64');
-            doc.moveDown(0.3);
-            doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
-            doc.moveDown(0.3);
-            doc.image(imageBuffer, {
-              fit: [cardWidth - 20, 140],
-              align: 'center'
-            });
-            doc.moveDown(0.6);
+          let base64Data = trade.screenshot;
+          if (trade.screenshot.includes('base64,')) {
+            base64Data = trade.screenshot.split('base64,')[1];
           }
+          base64Data = base64Data.replace(/\s/g, '');
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+
+          doc.moveDown(0.3);
+          doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
+          doc.moveDown(0.3);
+          doc.image(imageBuffer, {
+            fit: [cardWidth - 20, 140],
+            align: 'center'
+          });
+          doc.moveDown(0.6);
         } catch (imageErr) {
           console.error('Error drawing image in overall PDF:', imageErr.message);
         }
@@ -461,18 +464,21 @@ router.get('/export-monthly-pdf', async (req, res) => {
       if (trade.screenshot) {
         checkPageBreak(160);
         try {
-          const matches = trade.screenshot.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
-          if (matches && matches.length === 3) {
-            const imageBuffer = Buffer.from(matches[2], 'base64');
-            doc.moveDown(0.3);
-            doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
-            doc.moveDown(0.3);
-            doc.image(imageBuffer, {
-              fit: [cardWidth - 20, 140],
-              align: 'center'
-            });
-            doc.moveDown(0.6);
+          let base64Data = trade.screenshot;
+          if (trade.screenshot.includes('base64,')) {
+            base64Data = trade.screenshot.split('base64,')[1];
           }
+          base64Data = base64Data.replace(/\s/g, '');
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+
+          doc.moveDown(0.3);
+          doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
+          doc.moveDown(0.3);
+          doc.image(imageBuffer, {
+            fit: [cardWidth - 20, 140],
+            align: 'center'
+          });
+          doc.moveDown(0.6);
         } catch (imageErr) {
           console.error('Error drawing image in monthly PDF:', imageErr.message);
         }
@@ -670,18 +676,21 @@ router.get('/:id/export-pdf', async (req, res) => {
     if (trade.screenshot) {
       checkPageBreak(250);
       try {
-        const matches = trade.screenshot.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
-        if (matches && matches.length === 3) {
-          const imageBuffer = Buffer.from(matches[2], 'base64');
-          doc.moveDown(0.5);
-          doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#06b6d4').text('ATTACHED TRADE SCREENSHOT');
-          doc.moveDown(0.4);
-          doc.image(imageBuffer, {
-            fit: [doc.page.width - 80, 240],
-            align: 'center'
-          });
-          doc.moveDown(1);
+        let base64Data = trade.screenshot;
+        if (trade.screenshot.includes('base64,')) {
+          base64Data = trade.screenshot.split('base64,')[1];
         }
+        base64Data = base64Data.replace(/\s/g, '');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+
+        doc.moveDown(0.5);
+        doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#06b6d4').text('ATTACHED TRADE SCREENSHOT');
+        doc.moveDown(0.4);
+        doc.image(imageBuffer, {
+          fit: [doc.page.width - 80, 240],
+          align: 'center'
+        });
+        doc.moveDown(1);
       } catch (imageErr) {
         console.error('Error drawing image in single PDF:', imageErr.message);
       }
