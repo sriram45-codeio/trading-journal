@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Pencil, Trash2, AlertCircle, Search, Filter, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Pencil, Trash2, AlertCircle, Search, Filter, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight, ZoomIn, X } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
 export default function TradeTable({ trades, onEdit, onDelete, loading, filters, setFilters, onApplyFilters, onClearFilters }) {
   const [expandedTradeId, setExpandedTradeId] = useState(null);
+  const [lightboxScreenshot, setLightboxScreenshot] = useState(null);
 
   const toggleExpand = (id, e) => {
     if (e.target.closest('button') || e.target.closest('svg')) return;
@@ -28,6 +29,41 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
 
   return (
     <>
+      {/* ── Full-screen Lightbox ── */}
+      {lightboxScreenshot && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.88)', zIndex: 99999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px', backdropFilter: 'blur(6px)',
+          }}
+          onClick={() => setLightboxScreenshot(null)}
+        >
+          <button
+            onClick={() => setLightboxScreenshot(null)}
+            style={{
+              position: 'absolute', top: '20px', right: '24px',
+              background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '50%', width: '38px', height: '38px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', cursor: 'pointer',
+            }}
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={lightboxScreenshot}
+            alt="Trade Screenshot"
+            style={{
+              maxWidth: '90vw', maxHeight: '88vh',
+              objectFit: 'contain', borderRadius: '10px',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
       {/* ── Filters Bar ── */}
       <div style={{
         background: 'var(--bg-card)',
@@ -160,19 +196,6 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{trade.trade_date}</span>
                       {trade.trade_time && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trade.trade_time}</span>}
-                      {trade.screenshot && (
-                        <span 
-                          style={{ marginLeft: '4px', cursor: 'pointer', fontSize: '11px', background: 'rgba(255, 87, 34, 0.1)', border: '1px solid rgba(255, 87, 34, 0.25)', color: 'var(--accent-color)', padding: '1px 5px', borderRadius: '4px' }} 
-                          title="Click to view trade screenshot"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const win = window.open();
-                            win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-                          }}
-                        >
-                          📸 View Image
-                        </span>
-                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
                       {trade.session && (
@@ -213,6 +236,35 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                       );
                     })}
                   </div>
+
+                  {/* Screenshot inline thumbnail */}
+                  {trade.screenshot && (
+                    <div
+                      style={{
+                        width: '52px', height: '40px',
+                        borderRadius: '6px', overflow: 'hidden',
+                        border: '2px solid rgba(255, 87, 34, 0.35)',
+                        flexShrink: 0, cursor: 'zoom-in',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                        position: 'relative',
+                      }}
+                      onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
+                      title="Click to view screenshot"
+                    >
+                      <img src={trade.screenshot} alt="Screenshot" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(0,0,0,0)',
+                        transition: 'background 0.15s',
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.35)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0)'}
+                      >
+                        <ZoomIn size={12} color="#fff" style={{ opacity: 0.9 }} />
+                      </div>
+                    </div>
+                  )}
 
                   {/* P&L, Risk & Actions */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
@@ -265,30 +317,40 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                       {trade.screenshot && (
                         <div style={{
                           background: 'var(--bg-secondary)',
-                          border: '1.5px solid var(--border-color)',
+                          border: '1.5px solid rgba(255, 87, 34, 0.25)',
                           borderRadius: 'var(--radius-card)',
                           padding: '14px 16px',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '8px',
-                          cursor: 'zoom-in',
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const win = window.open();
-                          win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                          gap: '10px',
                         }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--accent-color)' }}>
-                            <span>📸</span>
-                            <span style={{ fontSize: '10.5px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                              Trade Screenshot
-                            </span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--accent-color)' }}>
+                              <span>📸</span>
+                              <span style={{ fontSize: '10.5px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trade Screenshot</span>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '4px',
+                                fontSize: '10px', fontWeight: '700', color: 'var(--accent-color)',
+                                background: 'rgba(255, 87, 34, 0.08)', border: '1px solid rgba(255, 87, 34, 0.2)',
+                                borderRadius: '4px', padding: '3px 8px', cursor: 'pointer',
+                              }}
+                            >
+                              <ZoomIn size={10} /> Full View
+                            </button>
                           </div>
-                          <img 
-                            src={trade.screenshot} 
-                            alt="Screenshot" 
-                            style={{ maxHeight: '120px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'block' }} 
+                          <img
+                            src={trade.screenshot}
+                            alt="Screenshot"
+                            style={{
+                              width: '100%', maxHeight: '180px', objectFit: 'contain',
+                              borderRadius: '6px', border: '1px solid var(--border-color)',
+                              display: 'block', cursor: 'zoom-in', background: 'var(--bg-card)',
+                            }}
+                            onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
                           />
                         </div>
                       )}

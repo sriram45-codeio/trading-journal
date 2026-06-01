@@ -3,7 +3,7 @@ import {
   TrendingUp, AlertCircle, BarChart3, Trophy, Target,
   TrendingDown, RefreshCw, Download, Search,
   BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight,
-  Calendar, Clock, Eye, FileText, SlidersHorizontal, X, Wallet
+  Calendar, Clock, Eye, FileText, SlidersHorizontal, X, Wallet, ZoomIn
 } from 'lucide-react';
 import api from '../../api/axios';
 import Toast from '../Toast';
@@ -25,6 +25,7 @@ export default function TradingReports() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [monthlyExporting, setMonthlyExporting] = useState({});
+  const [lightboxScreenshot, setLightboxScreenshot] = useState(null);
   const pollRef = useRef(null);
 
   const [selectedMonthKey, setSelectedMonthKey] = useState(null); // Drill-down active month
@@ -248,6 +249,38 @@ export default function TradingReports() {
     <div style={{ padding: '24px 30px', maxWidth: '1250px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
+      {/* Full-screen Lightbox */}
+      {lightboxScreenshot && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.88)', zIndex: 99999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px', backdropFilter: 'blur(6px)',
+          }}
+          onClick={() => setLightboxScreenshot(null)}
+        >
+          <button
+            onClick={() => setLightboxScreenshot(null)}
+            style={{
+              position: 'absolute', top: '20px', right: '24px',
+              background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '50%', width: '38px', height: '38px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', cursor: 'pointer',
+            }}
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={lightboxScreenshot}
+            alt="Trade Screenshot"
+            style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: '10px', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {/* Sleek Navigation Sub-Header */}
       <div style={{ 
         display: 'flex', 
@@ -426,23 +459,23 @@ export default function TradingReports() {
                     const isBuy = trade.direction === 'BUY';
                     const isWin = trade.outcome === 'WIN';
                     const pnlColor = trade.net_pnl > 0 ? 'var(--win-green)' : trade.net_pnl < 0 ? 'var(--loss-red)' : 'var(--text-muted)';
-                    
-                    return (
+                                  return (
                       <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }} className="table-row-hover">
                         <td style={{ padding: '6px 12px', fontWeight: '600' }}>{trade.trade_date}</td>
                         <td style={{ padding: '6px 12px', color: 'var(--text-primary)', fontWeight: '700' }}>
                           Trade {tradeNumberMap[trade.id] || '—'}
                           {trade.screenshot && (
-                            <span 
-                              style={{ marginLeft: '8px', cursor: 'pointer', fontSize: '11px', background: 'rgba(255, 87, 34, 0.1)', border: '1px solid rgba(255, 87, 34, 0.25)', color: 'var(--accent-color)', padding: '1px 5px', borderRadius: '4px' }} 
-                              title="Click to view trade screenshot"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const win = window.open();
-                                win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                            <span
+                              style={{
+                                display: 'inline-block', marginLeft: '8px', verticalAlign: 'middle',
+                                width: '36px', height: '28px', borderRadius: '4px', overflow: 'hidden',
+                                border: '1.5px solid rgba(255, 87, 34, 0.4)',
+                                cursor: 'zoom-in', boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
                               }}
+                              onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
+                              title="View screenshot"
                             >
-                              📸 View Image
+                              <img src={trade.screenshot} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                             </span>
                           )}
                         </td>
@@ -715,16 +748,17 @@ export default function TradingReports() {
                               <td style={{ padding: '6px 12px', fontWeight: '700', color: 'var(--text-primary)' }}>
                                 Trade {tradeNumberMap[trade.id] || '—'}
                                 {trade.screenshot && (
-                                  <span 
-                                    style={{ marginLeft: '8px', cursor: 'pointer', fontSize: '11px', background: 'rgba(255, 87, 34, 0.1)', border: '1px solid rgba(255, 87, 34, 0.25)', color: 'var(--accent-color)', padding: '1px 5px', borderRadius: '4px' }} 
-                                    title="Click to view trade screenshot"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const win = window.open();
-                                      win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                                  <span
+                                    style={{
+                                      display: 'inline-block', marginLeft: '8px', verticalAlign: 'middle',
+                                      width: '36px', height: '28px', borderRadius: '4px', overflow: 'hidden',
+                                      border: '1.5px solid rgba(255, 87, 34, 0.4)',
+                                      cursor: 'zoom-in', boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
                                     }}
+                                    onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
+                                    title="View screenshot"
                                   >
-                                    📸 View Image
+                                    <img src={trade.screenshot} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                                   </span>
                                 )}
                               </td>
