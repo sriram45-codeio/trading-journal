@@ -189,6 +189,26 @@ router.get('/export-pdf', async (req, res) => {
       drawTextLog('Emotion / Mindset Notes', trade.emotion_mindset);
       drawTextLog('Mistake / Improvement Actions', trade.mistake_improve);
 
+      if (trade.screenshot) {
+        checkPageBreak(160);
+        try {
+          const matches = trade.screenshot.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
+          if (matches && matches.length === 3) {
+            const imageBuffer = Buffer.from(matches[2], 'base64');
+            doc.moveDown(0.3);
+            doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
+            doc.moveDown(0.3);
+            doc.image(imageBuffer, {
+              fit: [cardWidth - 20, 140],
+              align: 'center'
+            });
+            doc.moveDown(0.6);
+          }
+        } catch (imageErr) {
+          console.error('Error drawing image in overall PDF:', imageErr.message);
+        }
+      }
+
       doc.moveDown(0.5);
       doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).strokeColor('#2D2D2D').lineWidth(1).stroke();
       doc.moveDown(1);
@@ -438,6 +458,26 @@ router.get('/export-monthly-pdf', async (req, res) => {
       drawTextLog('Emotion / Mindset Notes', trade.emotion_mindset);
       drawTextLog('Mistake / Improvement Actions', trade.mistake_improve);
 
+      if (trade.screenshot) {
+        checkPageBreak(160);
+        try {
+          const matches = trade.screenshot.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
+          if (matches && matches.length === 3) {
+            const imageBuffer = Buffer.from(matches[2], 'base64');
+            doc.moveDown(0.3);
+            doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
+            doc.moveDown(0.3);
+            doc.image(imageBuffer, {
+              fit: [cardWidth - 20, 140],
+              align: 'center'
+            });
+            doc.moveDown(0.6);
+          }
+        } catch (imageErr) {
+          console.error('Error drawing image in monthly PDF:', imageErr.message);
+        }
+      }
+
       doc.moveDown(0.5);
       doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).strokeColor('#2D2D2D').lineWidth(1).stroke();
       doc.moveDown(1);
@@ -617,6 +657,35 @@ router.get('/:id/export-pdf', async (req, res) => {
     drawNarrativeBlock('PART A: SETUP LOGIC (WHY THIS TRADE?)', trade.why_this_trade, '#06b6d4', '#06b6d4');
     drawNarrativeBlock('PART B: PSYCHOLOGY (EMOTION / MINDSET NOTES)', trade.emotion_mindset, '#7c3aed', '#7c3aed');
     drawNarrativeBlock('PART C: MISTAKE & ACTIONABLE IMPROVEMENTS', trade.mistake_improve, '#df514c', '#df514c');
+
+    const checkPageBreak = (neededHeight) => {
+      const bottomLimit = doc.page.height - 50;
+      if (doc.y + neededHeight > bottomLimit) {
+        doc.addPage();
+        return true;
+      }
+      return false;
+    };
+
+    if (trade.screenshot) {
+      checkPageBreak(250);
+      try {
+        const matches = trade.screenshot.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+          const imageBuffer = Buffer.from(matches[2], 'base64');
+          doc.moveDown(0.5);
+          doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#06b6d4').text('ATTACHED TRADE SCREENSHOT');
+          doc.moveDown(0.4);
+          doc.image(imageBuffer, {
+            fit: [doc.page.width - 80, 240],
+            align: 'center'
+          });
+          doc.moveDown(1);
+        }
+      } catch (imageErr) {
+        console.error('Error drawing image in single PDF:', imageErr.message);
+      }
+    }
 
     // Footer Page Tag on all pages
     const pages = doc.bufferedPageRange();
