@@ -172,10 +172,11 @@ export default function TradingReports() {
 
         {/* Modules Grid */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          display: 'flex',
+          justifyContent: 'center',
           gap: '24px',
-          marginTop: '12px'
+          marginTop: '20px',
+          flexWrap: 'wrap'
         }}>
           {/* Card 1: Overall Log */}
           <div 
@@ -192,21 +193,19 @@ export default function TradingReports() {
               e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-              <div style={moduleIconWrapperStyle}>
-                <BarChart3 size={24} color="var(--accent-color)" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                  Overall Performance Log
-                </h3>
-                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                  Analyze your cumulative trading performance. View total trades, net P&L, overall win rate, and verify trading rules/discipline. Features detailed trade list logs and complete PDF report exports.
-                </p>
-                <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '700', color: 'var(--accent-color)' }}>
-                  Open Module Directory →
-                </div>
-              </div>
+            <div style={moduleIconWrapperStyle}>
+              <BarChart3 size={26} color="var(--accent-color)" />
+            </div>
+            <div>
+              <h3 style={{ margin: '10px 0 0', fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                Overall Performance Log
+              </h3>
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                Analyze your cumulative trading performance. View total trades, net P&L, win rate, and discipline.
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '700', color: 'var(--accent-color)' }}>
+              Open Directory →
             </div>
           </div>
 
@@ -225,21 +224,19 @@ export default function TradingReports() {
               e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-              <div style={moduleIconWrapperStyle}>
-                <Calendar size={24} color="var(--accent-color)" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                  Monthly Trade Report
-                </h3>
-                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                  Analyze trade outcomes grouped by calendar month. Dive deep into monthly starting and ending balances, net monthly outcomes, win ratios, and drill down directly into individual calendar month log sheets.
-                </p>
-                <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '700', color: 'var(--accent-color)' }}>
-                  Open Module Directory →
-                </div>
-              </div>
+            <div style={moduleIconWrapperStyle}>
+              <Calendar size={26} color="var(--accent-color)" />
+            </div>
+            <div>
+              <h3 style={{ margin: '10px 0 0', fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                Monthly Trade Report
+              </h3>
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                Analyze trade outcomes grouped by calendar month. Dive deep into monthly starting/ending balances, and net monthly outcomes.
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '700', color: 'var(--accent-color)' }}>
+              Open Directory →
             </div>
           </div>
         </div>
@@ -888,6 +885,22 @@ function TradeDetailModal({ trade, onClose }) {
             <NarrativeBlock icon={<Brain size={12} />} label="Mindset & Psychology" content={trade.emotion_mindset} color="var(--accent-color)" />
             <NarrativeBlock icon={<ShieldAlert size={12} />} label="Improvements / Mistakes" content={trade.mistake_improve} color="var(--loss-red)" />
           </div>
+
+          {/* Screenshot Block */}
+          {trade.screenshot && (
+            <div style={{ background: 'var(--bg-secondary)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: '10.5px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--accent-color)', letterSpacing: '0.04em' }}>📸 Screenshot</h4>
+              <div 
+                style={{ borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'zoom-in', display: 'flex', justifyContent: 'center', background: 'var(--bg-card)', padding: '6px' }}
+                onClick={() => {
+                  const win = window.open();
+                  win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                }}
+              >
+                <img src={trade.screenshot} alt="Screenshot" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', display: 'block', borderRadius: '4px' }} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -947,16 +960,25 @@ const moduleCardStyle = {
   padding: '24px',
   cursor: 'pointer',
   transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+  width: '260px',
+  height: '260px',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  textAlign: 'center',
+  justifyContent: 'space-between',
+  boxSizing: 'border-box'
 };
 
 const moduleIconWrapperStyle = {
   background: 'rgba(255, 87, 34, 0.06)',
   border: '1px solid rgba(255, 87, 34, 0.15)',
-  padding: '12px',
-  borderRadius: '12px',
+  padding: '10px',
+  borderRadius: '10px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  flexShrink: 0
+  flexShrink: 0,
+  marginTop: '8px'
 };

@@ -216,6 +216,36 @@ export default function TradeCard({ trade, index, tradeNumber, isExpanded, onTog
               bg="var(--bg-secondary)"
               border="var(--border-color)"
             />
+            {trade.screenshot && (
+              <div style={{
+                background: 'var(--bg-secondary)',
+                border: '1.5px solid var(--border-color)',
+                borderRadius: 'var(--radius-card)',
+                padding: '14px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                cursor: 'zoom-in',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                const win = window.open();
+                win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+              }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--accent-color)' }}>
+                  <span>📸</span>
+                  <span style={{ fontSize: '10.5px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Trade Screenshot
+                  </span>
+                </div>
+                <img 
+                  src={trade.screenshot} 
+                  alt="Screenshot" 
+                  style={{ maxHeight: '120px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'block' }} 
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

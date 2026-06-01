@@ -65,14 +65,15 @@ if (USE_PG) {
           trade_date DATE NOT NULL,
           trade_time TIME,
           direction VARCHAR(10) CHECK(direction IN ('BUY','SELL')),
-          result VARCHAR(10) CHECK(result IN ('TP','LOSS')),
+          result VARCHAR(10) CHECK(result IN ('TP','SL','HOLD','LOSS')),
           net_pnl NUMERIC(15, 2) NOT NULL DEFAULT 0,
-          outcome VARCHAR(10) CHECK(outcome IN ('WIN','LOSS')),
+          outcome VARCHAR(10) CHECK(outcome IN ('WIN','LOSS','HOLD')),
           risk NUMERIC(15, 2),
           rr_ratio VARCHAR(10) DEFAULT '1:1',
           why_this_trade TEXT,
           emotion_mindset TEXT,
           mistake_improve TEXT,
+          screenshot TEXT,
           deleted_at TIMESTAMP DEFAULT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -108,6 +109,33 @@ if (USE_PG) {
         if (!migrationErr.message.includes('already exists')) {
           console.log('[PostgreSQL] starting_capital migration:', migrationErr.message);
         }
+      }
+
+      try {
+        const tradeCols = await pool.query(`
+          SELECT column_name FROM information_schema.columns 
+          WHERE table_schema = current_schema() AND table_name = 'trades' AND column_name = 'screenshot'
+        `);
+        if (tradeCols.rows.length === 0) {
+          await pool.query(`ALTER TABLE trades ADD COLUMN screenshot TEXT;`);
+          console.log('[PostgreSQL] Added screenshot column to trades table.');
+        }
+      } catch (migrationErr) {
+        console.log('[PostgreSQL] screenshot migration:', migrationErr.message);
+      }
+
+      try {
+        await pool.query("ALTER TABLE trades DROP CONSTRAINT IF EXISTS trades_result_check;");
+        await pool.query("ALTER TABLE trades ADD CONSTRAINT trades_result_check CHECK (result IN ('TP','SL','HOLD','LOSS'));");
+      } catch (err) {
+        console.log('[PostgreSQL] Failed to update result CHECK constraint:', err.message);
+      }
+
+      try {
+        await pool.query("ALTER TABLE trades DROP CONSTRAINT IF EXISTS trades_outcome_check;");
+        await pool.query("ALTER TABLE trades ADD CONSTRAINT trades_outcome_check CHECK (outcome IN ('WIN','LOSS','HOLD'));");
+      } catch (err) {
+        console.log('[PostgreSQL] Failed to update outcome CHECK constraint:', err.message);
       }
 
       // 4. Create Indexes
@@ -235,21 +263,107 @@ if (USE_PG) {
           trade_date TEXT NOT NULL,
           trade_time TEXT,
           direction TEXT CHECK(direction IN ('BUY','SELL')),
-          result TEXT CHECK(result IN ('TP','LOSS')),
+          result TEXT CHECK(result IN ('TP','SL','HOLD','LOSS')),
           net_pnl REAL NOT NULL DEFAULT 0,
-          outcome TEXT CHECK(outcome IN ('WIN','LOSS')),
+          outcome TEXT CHECK(outcome IN ('WIN','LOSS','HOLD')),
           risk REAL,
           rr_ratio TEXT DEFAULT '1:1',
           why_this_trade TEXT,
           emotion_mindset TEXT,
           mistake_improve TEXT,
+          screenshot TEXT,
           deleted_at DATETIME DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
       `);
 
-      // Safe migrations
+      // SQLite check constraint and schema migration dry-run test
+      const tableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='trades'").get();
+      if (tableExists) {
+        let needsMigration = false;
+        try {
+          db.exec("BEGIN TRANSACTION;");
+          db.exec("PRAGMA foreign_keys = OFF;");
+          db.exec("INSERT INTO trades (id, user_id, trade_date, direction, result, net_pnl, outcome) VALUES (-99, -99, '2026-01-01', 'BUY', 'HOLD', 0, 'HOLD');");
+          db.exec("ROLLBACK;");
+        } catch (err) {
+          needsMigration = true;
+          try { db.exec("ROLLBACK;"); } catch(e){}
+        } finally {
+          db.exec("PRAGMA foreign_keys = ON;");
+        }
+
+        if (needsMigration) {
+          console.log('[SQLite] Result/outcome constraints restrict HOLD/SL. Migrating trades table...');
+          db.exec("PRAGMA foreign_keys = OFF;");
+          db.exec("BEGIN TRANSACTION;");
+          
+          // Rename old table
+          db.exec("ALTER TABLE trades RENAME TO trades_old;");
+          
+          // Create new table
+          db.exec(`
+            CREATE TABLE trades (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              session TEXT,
+              bias TEXT,
+              key_level TEXT,
+              key_level_tap TEXT CHECK(key_level_tap IN ('YES','NO')),
+              cisd TEXT,
+              trade_date TEXT NOT NULL,
+              trade_time TEXT,
+              direction TEXT CHECK(direction IN ('BUY','SELL')),
+              result TEXT CHECK(result IN ('TP','SL','HOLD','LOSS')),
+              net_pnl REAL NOT NULL DEFAULT 0,
+              outcome TEXT CHECK(outcome IN ('WIN','LOSS','HOLD')),
+              risk REAL,
+              rr_ratio TEXT DEFAULT '1:1',
+              why_this_trade TEXT,
+              emotion_mindset TEXT,
+              mistake_improve TEXT,
+              screenshot TEXT,
+              deleted_at DATETIME DEFAULT NULL,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+          
+          // Copy data
+          const oldColumns = db.prepare("PRAGMA table_info(trades_old)").all().map(c => c.name);
+          const commonColumns = [
+            'id', 'user_id', 'session', 'bias', 'key_level', 'key_level_tap', 'cisd',
+            'trade_date', 'trade_time', 'direction', 'result', 'net_pnl', 'outcome',
+            'risk', 'rr_ratio', 'why_this_trade', 'emotion_mindset', 'mistake_improve',
+            'deleted_at', 'created_at', 'updated_at'
+          ].filter(c => oldColumns.includes(c));
+          
+          if (oldColumns.includes('screenshot')) {
+            commonColumns.push('screenshot');
+          }
+          
+          const colsStr = commonColumns.join(', ');
+          db.exec(`INSERT INTO trades (${colsStr}) SELECT ${colsStr} FROM trades_old;`);
+          
+          // Drop old table
+          db.exec("DROP TABLE trades_old;");
+          
+          db.exec("COMMIT;");
+          db.exec("PRAGMA foreign_keys = ON;");
+          console.log('[SQLite] Table migration complete.');
+        } else {
+          // If we don't need a constraint migration, we still check if the screenshot column exists
+          const tradeColumns = db.prepare("PRAGMA table_info(trades)").all();
+          const tradeColNames = tradeColumns.map(c => c.name);
+          if (!tradeColNames.includes('screenshot')) {
+            db.exec("ALTER TABLE trades ADD COLUMN screenshot TEXT;");
+            console.log('[SQLite] Added screenshot column to trades table.');
+          }
+        }
+      }
+
+      // Safe migrations for other columns
       const tradeColumns = db.prepare("PRAGMA table_info(trades)").all();
       const tradeColNames = tradeColumns.map(c => c.name);
       if (!tradeColNames.includes('rr_ratio')) {

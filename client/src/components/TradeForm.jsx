@@ -18,7 +18,8 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
     rr_ratio: '1:1',
     why_this_trade: '',
     emotion_mindset: '',
-    mistake_improve: ''
+    mistake_improve: '',
+    screenshot: null
   });
   const [errors, setErrors] = useState({});
 
@@ -38,7 +39,8 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
         rr_ratio: initialData.rr_ratio || '1:1',
         why_this_trade: initialData.why_this_trade || '',
         emotion_mindset: initialData.emotion_mindset || '',
-        mistake_improve: initialData.mistake_improve || ''
+        mistake_improve: initialData.mistake_improve || '',
+        screenshot: initialData.screenshot || null
       });
     }
   }, [initialData]);
@@ -56,6 +58,43 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
     if (!formData.result) e.result = 'Required';
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const handleFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const base64 = canvas.toDataURL('image/jpeg', 0.7);
+        setFormData(prev => ({ ...prev, screenshot: base64 }));
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e) => {
@@ -267,7 +306,8 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                   onChange={handleChange}
                   options={[
                     { value: 'TP', label: 'TP (Take Profit)', icon: '🟢' },
-                    { value: 'LOSS', label: 'LOSS (Stop Loss Hit)', icon: '🔴' }
+                    { value: 'SL', label: 'SL (Stop Loss Hit)', icon: '🔴' },
+                    { value: 'HOLD', label: 'HOLD (Wait / Pending Result)', icon: '🟡' }
                   ]}
                   id="input-result"
                 />
@@ -301,6 +341,65 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                   ]}
                   id="input-rr-ratio"
                 />
+              </div>
+              <div>
+                <label style={labelStyle}>7. Screenshot of Trade</label>
+                <div style={{
+                  border: '1.5px dashed var(--border-color)',
+                  borderRadius: 'var(--radius-btn)',
+                  padding: '12px',
+                  textAlign: 'center',
+                  background: 'var(--bg-secondary)',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files[0];
+                  if (file) handleFile(file);
+                }}
+                >
+                  {formData.screenshot ? (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <img 
+                        src={formData.screenshot} 
+                        alt="Trade Screenshot" 
+                        style={{ maxHeight: '110px', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'block' }} 
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData(prev => ({ ...prev, screenshot: null }));
+                        }}
+                        style={{
+                          position: 'absolute', top: '-6px', right: '-6px',
+                          background: '#df514c', color: '#fff', border: 'none',
+                          borderRadius: '50%', padding: '2px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0 }}>
+                      <span style={{ fontSize: '18px' }}>📸</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Click or Drag screenshot to upload</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) handleFile(file);
+                        }} 
+                        style={{ display: 'none' }} 
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
             </div>
           </div>

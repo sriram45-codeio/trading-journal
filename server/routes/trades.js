@@ -19,7 +19,8 @@ router.get('/export-pdf', async (req, res) => {
 
     const wins = trades.filter(t => t.outcome === 'WIN');
     const losses = trades.filter(t => t.outcome === 'LOSS');
-    const total_trades = trades.length;
+    const activeTrades = trades.filter(t => t.outcome !== 'HOLD');
+    const total_trades = activeTrades.length;
 
     const win_rate = total_trades > 0 ? ((wins.length / total_trades) * 100).toFixed(2) : '0.00';
     const total_net_pnl = trades.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0).toFixed(2);
@@ -27,7 +28,7 @@ router.get('/export-pdf', async (req, res) => {
     const avg_loss_pnl = losses.length > 0 ? (losses.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0) / losses.length).toFixed(2) : '0.00';
     
     // Tap count as adherence metric
-    const rules_followed_count = trades.filter(t => t.key_level_tap === 'YES').length;
+    const rules_followed_count = activeTrades.filter(t => t.key_level_tap === 'YES').length;
     const rules_followed_rate = total_trades > 0 ? ((rules_followed_count / total_trades) * 100).toFixed(2) : '0.00';
 
     const userRes = await db.query('SELECT starting_capital FROM users WHERE id = $1', [req.user.id]);
@@ -287,7 +288,8 @@ router.get('/export-monthly-pdf', async (req, res) => {
 
     const wins = monthTrades.filter(t => t.outcome === 'WIN');
     const losses = monthTrades.filter(t => t.outcome === 'LOSS');
-    const total_trades = monthTrades.length;
+    const activeTrades = monthTrades.filter(t => t.outcome !== 'HOLD');
+    const total_trades = activeTrades.length;
 
     const win_rate = total_trades > 0 ? ((wins.length / total_trades) * 100).toFixed(2) : '0.00';
     const total_net_pnl = monthTrades.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0).toFixed(2);
@@ -295,7 +297,7 @@ router.get('/export-monthly-pdf', async (req, res) => {
     const avg_win_pnl = wins.length > 0 ? (wins.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0) / wins.length).toFixed(2) : '0.00';
     const avg_loss_pnl = losses.length > 0 ? (losses.reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0) / losses.length).toFixed(2) : '0.00';
     
-    const rules_followed_count = monthTrades.filter(t => t.key_level_tap === 'YES').length;
+    const rules_followed_count = activeTrades.filter(t => t.key_level_tap === 'YES').length;
     const rules_followed_rate = total_trades > 0 ? ((rules_followed_count / total_trades) * 100).toFixed(2) : '0.00';
 
     const doc = new PDFDocument({
@@ -547,6 +549,7 @@ router.get('/:id/export-pdf', async (req, res) => {
     doc.fillColor('#7c3aed').font('Helvetica-Bold').fontSize(11).text('Financials & Outcome', 320, startY + 12);
 
     const isWin = trade.outcome === 'WIN';
+    const isHold = trade.outcome === 'HOLD';
     const sideColor = trade.direction === 'BUY' ? '#4184f3' : '#df514c';
     const parsedPnl = parseFloat(trade.net_pnl || 0);
     const pnlColor = parsedPnl > 0 ? '#2ebd85' : parsedPnl < 0 ? '#df514c' : '#888888';
@@ -556,20 +559,20 @@ router.get('/:id/export-pdf', async (req, res) => {
     drawItem('Trade Time (IST):', trade.trade_time || '—', false, '', '#FFFFFF', 320, startY + 54);
     drawItem('Order Direction:', trade.direction, false, '', sideColor, 320, startY + 72);
     drawItem('Risk Exposure:', trade.risk != null ? `$${trade.risk.toFixed(2)}` : '—', false, '', '#FFFFFF', 320, startY + 90);
-    drawItem('Outcome Result:', trade.outcome, false, '', isWin ? '#2ebd85' : '#df514c', 320, startY + 108);
+    drawItem('Outcome Result:', trade.outcome, false, '', isWin ? '#2ebd85' : isHold ? '#888888' : '#df514c', 320, startY + 108);
 
     doc.y = startY + boxHeight + 20;
 
     // 4. Hero P&L Banner
     const pnlBannerY = doc.y;
     doc.roundedRect(40, pnlBannerY, doc.page.width - 80, 54, 6)
-       .fillColor(isWin ? '#1b2c24' : '#2d1b1a')
-       .strokeColor(isWin ? '#233d32' : '#3d2322')
+       .fillColor(isWin ? '#1b2c24' : isHold ? '#222222' : '#2d1b1a')
+       .strokeColor(isWin ? '#233d32' : isHold ? '#333333' : '#3d2322')
        .lineWidth(1)
        .fillAndStroke();
 
     // Accent line on left of P&L
-    doc.rect(40, pnlBannerY, 4, 54).fill(isWin ? '#2ebd85' : '#df514c');
+    doc.rect(40, pnlBannerY, 4, 54).fill(isWin ? '#2ebd85' : isHold ? '#888888' : '#df514c');
 
     doc.fillColor('#FFFFFF').font('Helvetica').fontSize(9.5).text('NET PROFIT / LOSS:', 60, pnlBannerY + 22);
     doc.fillColor(pnlColor).font('Helvetica-Bold').fontSize(20).text(
@@ -577,8 +580,8 @@ router.get('/:id/export-pdf', async (req, res) => {
       200,
       pnlBannerY + 16
     );
-    doc.fillColor(isWin ? '#2ebd85' : '#df514c').font('Helvetica-Bold').fontSize(12).text(
-      trade.outcome === 'WIN' ? 'WINNING TRADE' : 'LOSS ENCOUNTERED',
+    doc.fillColor(isWin ? '#2ebd85' : isHold ? '#888888' : '#df514c').font('Helvetica-Bold').fontSize(12).text(
+      trade.outcome === 'WIN' ? 'WINNING TRADE' : trade.outcome === 'HOLD' ? 'TRADE ON HOLD' : 'LOSS ENCOUNTERED',
       380,
       pnlBannerY + 21
     );

@@ -15,7 +15,7 @@ async function createTrade(req, res) {
   const {
     session, bias, key_level, key_level_tap, cisd,
     trade_date, trade_time, direction, result, risk, rr_ratio,
-    why_this_trade, emotion_mindset, mistake_improve
+    why_this_trade, emotion_mindset, mistake_improve, screenshot
   } = req.body;
 
   if (!trade_date || !direction || !result) {
@@ -25,7 +25,7 @@ async function createTrade(req, res) {
   }
 
   const normalizedDirection = ['BUY', 'LONG'].includes(direction.toUpperCase()) ? 'BUY' : 'SELL';
-  const normalizedResult = result.toUpperCase() === 'TP' ? 'TP' : 'LOSS';
+  const normalizedResult = ['TP', 'SL', 'HOLD', 'LOSS'].includes(result.toUpperCase()) ? result.toUpperCase() : 'TP';
   const tapVal = ['YES', 'NO'].includes(String(key_level_tap).toUpperCase()) ? String(key_level_tap).toUpperCase() : 'NO';
   
   // Validate rr_ratio — allow any positive numeric ratio format e.g. 1:X where X is positive
@@ -35,16 +35,27 @@ async function createTrade(req, res) {
   
   // Calculate net_pnl from risk, result, and R:R ratio
   const riskVal = risk ? parseFloat(risk) : 0;
-  const net_pnl = normalizedResult === 'TP' ? Math.abs(riskVal) * rrMultiplier : -Math.abs(riskVal);
-  const outcome = normalizedResult === 'TP' ? 'WIN' : 'LOSS';
+  let net_pnl = 0;
+  let outcome = 'HOLD';
+
+  if (normalizedResult === 'TP') {
+    net_pnl = Math.abs(riskVal) * rrMultiplier;
+    outcome = 'WIN';
+  } else if (normalizedResult === 'SL' || normalizedResult === 'LOSS') {
+    net_pnl = -Math.abs(riskVal);
+    outcome = 'LOSS';
+  } else {
+    net_pnl = 0;
+    outcome = 'HOLD';
+  }
 
   try {
     const insertResult = await db.query(`
       INSERT INTO trades (
         user_id, session, bias, key_level, key_level_tap, cisd,
         trade_date, trade_time, direction, result, net_pnl, outcome, risk, rr_ratio,
-        why_this_trade, emotion_mindset, mistake_improve
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        why_this_trade, emotion_mindset, mistake_improve, screenshot
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *
     `, [
       req.user.id,
@@ -63,7 +74,8 @@ async function createTrade(req, res) {
       normalizedRR,
       why_this_trade || null,
       emotion_mindset || null,
-      mistake_improve || null
+      mistake_improve || null,
+      screenshot || null
     ]);
 
     const trade = insertResult.rows[0];
@@ -139,7 +151,7 @@ async function updateTrade(req, res) {
   const {
     session, bias, key_level, key_level_tap, cisd,
     trade_date, trade_time, direction, result, risk, rr_ratio,
-    why_this_trade, emotion_mindset, mistake_improve
+    why_this_trade, emotion_mindset, mistake_improve, screenshot
   } = req.body;
 
   try {
@@ -155,7 +167,7 @@ async function updateTrade(req, res) {
     }
 
     const updatedDirection = direction ? (['BUY', 'LONG'].includes(direction.toUpperCase()) ? 'BUY' : 'SELL') : existingTrade.direction;
-    const updatedResult = result ? (result.toUpperCase() === 'TP' ? 'TP' : 'LOSS') : existingTrade.result;
+    const updatedResult = result ? (['TP', 'SL', 'HOLD', 'LOSS'].includes(result.toUpperCase()) ? result.toUpperCase() : existingTrade.result) : existingTrade.result;
     const tapVal = key_level_tap ? (['YES', 'NO'].includes(String(key_level_tap).toUpperCase()) ? String(key_level_tap).toUpperCase() : 'NO') : existingTrade.key_level_tap;
     const riskVal = risk !== undefined ? (risk ? parseFloat(risk) : null) : existingTrade.risk;
     
@@ -169,16 +181,27 @@ async function updateTrade(req, res) {
     
     // Recalculate net_pnl from risk, result, and R:R ratio
     const effectiveRisk = riskVal || 0;
-    const net_pnl = updatedResult === 'TP' ? Math.abs(effectiveRisk) * rrMultiplier : -Math.abs(effectiveRisk);
-    const outcome = updatedResult === 'TP' ? 'WIN' : 'LOSS';
+    let net_pnl = 0;
+    let outcome = 'HOLD';
+
+    if (updatedResult === 'TP') {
+      net_pnl = Math.abs(effectiveRisk) * rrMultiplier;
+      outcome = 'WIN';
+    } else if (updatedResult === 'SL' || updatedResult === 'LOSS') {
+      net_pnl = -Math.abs(effectiveRisk);
+      outcome = 'LOSS';
+    } else {
+      net_pnl = 0;
+      outcome = 'HOLD';
+    }
 
     const updateResult = await db.query(`
       UPDATE trades SET
         session = $1, bias = $2, key_level = $3, key_level_tap = $4, cisd = $5,
         trade_date = $6, trade_time = $7, direction = $8, result = $9, net_pnl = $10, outcome = $11, risk = $12, rr_ratio = $13,
-        why_this_trade = $14, emotion_mindset = $15, mistake_improve = $16,
+        why_this_trade = $14, emotion_mindset = $15, mistake_improve = $16, screenshot = $17,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $17 AND user_id = $18
+      WHERE id = $18 AND user_id = $19
       RETURNING *
     `, [
       session !== undefined ? session : existingTrade.session,
@@ -197,6 +220,7 @@ async function updateTrade(req, res) {
       why_this_trade !== undefined ? why_this_trade : existingTrade.why_this_trade,
       emotion_mindset !== undefined ? emotion_mindset : existingTrade.emotion_mindset,
       mistake_improve !== undefined ? mistake_improve : existingTrade.mistake_improve,
+      screenshot !== undefined ? screenshot : existingTrade.screenshot,
       tradeId,
       req.user.id
     ]);

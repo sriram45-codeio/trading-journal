@@ -8,9 +8,10 @@ async function getSummary(req, res) {
     );
 
     const trades = tradesRes.rows;
-    const total_trades = trades.length;
+    const activeTrades = trades.filter(t => t.outcome !== 'HOLD');
+    const total_trades = activeTrades.length;
 
-    if (total_trades === 0) {
+    if (trades.length === 0) {
       return res.status(200).json({
         total_trades: 0, total_wins: 0, total_losses: 0,
         win_rate: 0, total_net_pnl: 0, avg_win: 0, avg_win_pnl: 0, avg_loss_pnl: 0,
@@ -18,8 +19,8 @@ async function getSummary(req, res) {
       });
     }
 
-    const wins = trades.filter(t => t.outcome === 'WIN');
-    const losses = trades.filter(t => t.outcome === 'LOSS');
+    const wins = activeTrades.filter(t => t.outcome === 'WIN');
+    const losses = activeTrades.filter(t => t.outcome === 'LOSS');
 
     const total_wins = wins.length;
     const total_losses = losses.length;
@@ -36,7 +37,7 @@ async function getSummary(req, res) {
       : 0;
 
     // Use key_level_tap === 'YES' as our "discipline / rules followed" metric!
-    const rulesFollowedCount = trades.filter(t => t.key_level_tap === 'YES').length;
+    const rulesFollowedCount = activeTrades.filter(t => t.key_level_tap === 'YES').length;
     const rules_followed_rate = total_trades > 0
       ? ((rulesFollowedCount / total_trades) * 100).toFixed(2)
       : 0;
@@ -173,7 +174,9 @@ async function getMonthlyReport(req, res) {
     let currentBalance = startingCapital;
 
     trades.forEach(t => {
-      currentBalance += parseFloat(t.net_pnl);
+      // If it is 'HOLD', it doesn't affect running balance or monthly statistics:
+      const netPnlVal = t.outcome === 'HOLD' ? 0.0 : parseFloat(t.net_pnl);
+      currentBalance += netPnlVal;
       t.balance_after = parseFloat(currentBalance.toFixed(2));
 
       let dateStr = "";
@@ -197,16 +200,21 @@ async function getMonthlyReport(req, res) {
           trades: [],
           total_pnl: 0,
           wins: 0,
-          losses: 0
+          losses: 0,
+          active_trades_count: 0
         };
       }
 
       monthlyGroups[monthKey].trades.push(t);
-      monthlyGroups[monthKey].total_pnl += parseFloat(t.net_pnl);
-      if (t.outcome === 'WIN') {
-        monthlyGroups[monthKey].wins++;
-      } else {
-        monthlyGroups[monthKey].losses++;
+      
+      if (t.outcome !== 'HOLD') {
+        monthlyGroups[monthKey].active_trades_count++;
+        monthlyGroups[monthKey].total_pnl += parseFloat(t.net_pnl);
+        if (t.outcome === 'WIN') {
+          monthlyGroups[monthKey].wins++;
+        } else if (t.outcome === 'LOSS') {
+          monthlyGroups[monthKey].losses++;
+        }
       }
     });
 
@@ -215,7 +223,7 @@ async function getMonthlyReport(req, res) {
 
     const reports = sortedMonths.map(monthKey => {
       const group = monthlyGroups[monthKey];
-      const total_trades = group.trades.length;
+      const total_trades = group.active_trades_count;
       const win_rate = total_trades > 0 ? parseFloat(((group.wins / total_trades) * 100).toFixed(2)) : 0.0;
 
       const starting_balance = parseFloat(runningStartingBalance.toFixed(2));

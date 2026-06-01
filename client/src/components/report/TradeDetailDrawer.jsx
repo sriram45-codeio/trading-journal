@@ -182,6 +182,45 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
               color="var(--loss-red)"
             />
           </div>
+          {trade.screenshot && (
+            <div style={{ marginTop: '20px' }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                marginBottom: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}>
+                📸 Screenshot of Trade
+              </div>
+              <div 
+                style={{
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  border: '1.5px solid var(--border-color)',
+                  cursor: 'zoom-in',
+                  background: 'var(--bg-card)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  padding: '8px'
+                }}
+                onClick={() => {
+                  const win = window.open();
+                  win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                }}
+              >
+                <img 
+                  src={trade.screenshot} 
+                  alt="Trade Screenshot" 
+                  style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', display: 'block', borderRadius: '6px' }} 
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions Footer */}
