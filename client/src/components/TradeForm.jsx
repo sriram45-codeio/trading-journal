@@ -67,8 +67,8 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1400;
-        const MAX_HEIGHT = 1400;
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 1000;
         let width = img.width;
         let height = img.height;
 
@@ -84,12 +84,20 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
           }
         }
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = Math.floor(width);
+        canvas.height = Math.floor(height);
         const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
 
-        const base64 = canvas.toDataURL('image/jpeg', 0.75);
+        let base64 = canvas.toDataURL('image/jpeg', 0.65);
+        
+        // If image Base64 string is still over 500KB, apply second-pass compression
+        if (base64.length > 500000) {
+          base64 = canvas.toDataURL('image/jpeg', 0.45);
+        }
+
         setFormData(prev => ({ ...prev, screenshot: base64 }));
       };
       img.src = event.target.result;
