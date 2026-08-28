@@ -39,7 +39,17 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
+      <div 
+        className="drawer-overlay" 
+        onClick={onClose} 
+        style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 9998,
+        }}
+      />
       
       {/* Lightbox Image Overlay */}
       {showZoom && trade.screenshot && (
@@ -73,7 +83,21 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
         </div>
       )}
 
-      <div className="drawer-panel">
+      <div 
+        className="drawer-panel"
+        style={{
+          position: 'fixed',
+          top: 0, right: 0, bottom: 0,
+          width: '100%', maxWidth: '600px',
+          background: 'var(--bg-secondary)',
+          borderLeft: '1.5px solid var(--border-color)',
+          boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.2)',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+        }}
+      >
         {/* Header */}
         <div style={{
           padding: '16px 20px',
