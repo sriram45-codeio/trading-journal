@@ -55,10 +55,10 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
             </div>
             <div>
               <h1 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.3px' }}>
-                FOREXFLOW
+                TRADEKONNECT
               </h1>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '1px 0 0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Console Console v2
+              <p style={{ fontSize: '10px', color: 'var(--accent-color)', margin: '1px 0 0', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                ForexFlow! Suite
               </p>
             </div>
           </div>

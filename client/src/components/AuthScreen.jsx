@@ -78,11 +78,11 @@ export default function AuthScreen({ onAuthSuccess }) {
             </svg>
           </div>
           <span style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.4px' }}>
-            ForexFlow <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: '4px' }}>Console</span>
+            TradeKonnect <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: '4px' }}>ForexFlow!</span>
           </span>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '500', margin: 0 }}>
-          Trading Analytics & Journal Management System
+          ForexFlow! Journal & Trading Analytics System
         </p>
       </div>
 

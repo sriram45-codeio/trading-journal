@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 
 export default function Header({ activePage, setActivePage, onLogout, theme, toggleTheme }) {
-  const userEmail = localStorage.getItem('tj_email') || 'admin@democompany.com';
-  const companyName = 'Demo Company Private Limited';
+  const userEmail = localStorage.getItem('tj_email') || 'admin@forexflow.com';
+  const companyName = 'ForexFlow!';
   const [showAppMenu, setShowAppMenu] = useState(false);
   const appMenuRef = useRef(null);
 
@@ -46,7 +46,7 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
+          boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)'
         }}>
           <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
             <path d="M8 23 L16 9 L24 23" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
@@ -55,18 +55,18 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
         </div>
         <div>
           <span style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.3px', display: 'block', lineHeight: 1.1 }}>
-            ForexFlow
+            TradeKonnect
           </span>
           <span style={{
             fontSize: '10px',
-            color: 'var(--text-muted)',
-            background: 'var(--border-subtle)',
+            color: 'var(--accent-color)',
+            background: 'var(--accent-light)',
             padding: '1px 6px',
             borderRadius: '4px',
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--accent-border)',
             display: 'inline-block',
             marginTop: '2px',
-            fontWeight: '600'
+            fontWeight: '700'
           }}>
             {companyName}
           </span>
@@ -218,10 +218,10 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.2px' }}>
-                ForexFlow Console Modules
+                TradeKonnect Modules
               </span>
-              <span style={{ fontSize: '10px', background: '#eff6ff', color: '#2563eb', fontWeight: '700', padding: '2px 8px', borderRadius: '99px' }}>
-                ChannelKonnect v2
+              <span style={{ fontSize: '10px', background: '#e0f2fe', color: '#0284c7', fontWeight: '700', padding: '2px 8px', borderRadius: '99px' }}>
+                ForexFlow! v2
               </span>
             </div>
 
