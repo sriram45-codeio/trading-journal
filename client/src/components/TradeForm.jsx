@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { CustomDatePicker, CustomTimePicker } from './CustomDateTimePicker';
 import CustomSelect from './CustomSelect';
@@ -22,6 +22,7 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
     screenshot: null
   });
   const [errors, setErrors] = useState({});
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (initialData) {
@@ -363,13 +364,13 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                 />
               </div>
               <div>
-                <label style={labelStyle}>7. Screenshot of Trade</label>
+                <label style={labelStyle}>7. Screenshot of Trade Log</label>
                 <div style={{
-                  border: '1.5px dashed var(--border-color)',
+                  border: '1.5px dashed var(--accent-border)',
                   borderRadius: 'var(--radius-btn)',
                   padding: '12px',
                   textAlign: 'center',
-                  background: 'var(--bg-secondary)',
+                  background: '#f0f9ff',
                   position: 'relative',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -383,43 +384,54 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                   if (file) handleFile(file);
                 }}
                 >
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    accept="image/*" 
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) handleFile(file);
+                    }} 
+                    style={{ display: 'none' }} 
+                  />
                   {formData.screenshot ? (
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                       <img 
                         src={formData.screenshot} 
                         alt="Trade Screenshot" 
-                        style={{ maxHeight: '110px', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'block' }} 
+                        style={{ maxHeight: '120px', maxWidth: '100%', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'block' }} 
                       />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFormData(prev => ({ ...prev, screenshot: null }));
-                        }}
-                        style={{
-                          position: 'absolute', top: '-6px', right: '-6px',
-                          background: '#df514c', color: '#fff', border: 'none',
-                          borderRadius: '50%', padding: '2px', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}
-                      >
-                        <X size={10} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                          className="kite-btn kite-btn-ghost"
+                          style={{ padding: '4px 10px', fontSize: '11px' }}
+                        >
+                          📷 Change Photo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData(prev => ({ ...prev, screenshot: null }));
+                          }}
+                          className="kite-btn kite-btn-ghost"
+                          style={{ padding: '4px 10px', fontSize: '11px', color: '#ef4444', borderColor: '#fecaca' }}
+                        >
+                          ❌ Remove
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0 }}>
-                      <span style={{ fontSize: '18px' }}>📸</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Click, Drag, or Paste (Ctrl+V) screenshot</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) handleFile(file);
-                        }} 
-                        style={{ display: 'none' }} 
-                      />
-                    </label>
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px' }}
+                    >
+                      <span style={{ fontSize: '20px' }}>📸</span>
+                      <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--accent-color)' }}>Click to upload, drag image, or paste (Ctrl+V)</span>
+                      <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Auto-compressed to crisp JPEG</span>
+                    </div>
                   )}
                 </div>
               </div>

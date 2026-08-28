@@ -239,8 +239,12 @@ async function updateTrade(req, res) {
     }
 
     let processedScreenshot = existingTrade.screenshot;
-    if (screenshot !== undefined && screenshot !== null) {
-      processedScreenshot = await s3Service.uploadTradeScreenshot(screenshot, req.user.id);
+    if (screenshot !== undefined) {
+      if (screenshot && typeof screenshot === 'string' && screenshot.trim() !== '') {
+        processedScreenshot = await s3Service.uploadTradeScreenshot(screenshot, req.user.id);
+      } else {
+        processedScreenshot = null;
+      }
     }
 
     const updateResult = await db.query(`
