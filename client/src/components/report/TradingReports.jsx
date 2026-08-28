@@ -830,7 +830,11 @@ export default function TradingReports() {
 
       {/* Trade Detail Modal (Eye Button) */}
       {selectedTrade && (
-        <TradeDetailModal trade={selectedTrade} onClose={() => setSelectedTrade(null)} />
+        <TradeDetailModal 
+          trade={selectedTrade} 
+          onClose={() => setSelectedTrade(null)} 
+          onZoomScreenshot={(img) => setLightboxScreenshot(img)}
+        />
       )}
     </div>
   );
@@ -861,13 +865,12 @@ function StatCard({ icon, label, value, sub, color }) {
         <span style={{ color }}>{icon}</span>
         <span style={{ fontSize: '10.5px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
       </div>
-      <div style={{ fontSize: '22px', fontWeight: '800', color: color || 'var(--text-primary)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
       {sub && <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500', marginTop: '4px' }}>{sub}</div>}
     </div>
   );
 }
 
-function TradeDetailModal({ trade, onClose }) {
+function TradeDetailModal({ trade, onClose, onZoomScreenshot }) {
   const isWin = trade.outcome === 'WIN';
   const isBuy = trade.direction === 'BUY';
   const pnlColor = trade.net_pnl > 0 ? 'var(--win-green)' : trade.net_pnl < 0 ? 'var(--loss-red)' : 'var(--text-muted)';
@@ -876,38 +879,38 @@ function TradeDetailModal({ trade, onClose }) {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+      background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 9999, padding: '20px'
     }} onClick={onClose}>
       <div style={{
         background: 'var(--bg-card)', border: '1.5px solid var(--border-color)',
-        borderRadius: 'var(--radius-card)', width: '100%', maxWidth: '600px',
-        overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.24)',
+        borderRadius: 'var(--radius-card)', width: '100%', maxWidth: '640px',
+        overflow: 'hidden', boxShadow: 'var(--shadow-lg)',
         position: 'relative'
       }} onClick={e => e.stopPropagation()}>
         
         {/* Header */}
         <div style={{
-          padding: '16px 20px', background: isWin ? 'rgba(0, 162, 124, 0.05)' : 'rgba(223, 81, 76, 0.05)',
-          borderBottom: '1.5px solid var(--border-color)', display: 'flex',
+          padding: '16px 20px', background: isWin ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+          borderBottom: '1px solid var(--border-color)', display: 'flex',
           alignItems: 'center', justifyContent: 'space-between'
         }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
-              Trade #{trade.id} Details
+              Trade Log #{trade.id} Details
             </h3>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
               Logged on {trade.trade_date} {trade.trade_time || ''}
             </span>
           </div>
-          <button onClick={onClose} className="kite-btn kite-btn-ghost" style={{ padding: '4px', minWidth: 'auto', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={onClose} style={{ border: '1px solid var(--border-color)', background: 'transparent', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={15} />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '70vh', overflowY: 'auto' }}>
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '78vh', overflowY: 'auto' }}>
           
           {/* Quick Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
@@ -931,6 +934,32 @@ function TradeDetailModal({ trade, onClose }) {
             </div>
           </div>
 
+          {/* Prominent Uploaded Screenshot */}
+          {trade.screenshot ? (
+            <div style={{ background: '#f0f9ff', padding: '14px', borderRadius: '8px', border: '1px solid var(--accent-border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <h4 style={{ margin: 0, fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--accent-color)', letterSpacing: '0.04em' }}>📸 Uploaded Trade Screenshot</h4>
+                <button
+                  onClick={() => onZoomScreenshot(trade.screenshot)}
+                  className="kite-btn kite-btn-blue"
+                  style={{ padding: '3px 8px', fontSize: '10.5px' }}
+                >
+                  <ZoomIn size={11} /> Zoom View
+                </button>
+              </div>
+              <div 
+                style={{ borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--accent-border)', cursor: 'zoom-in', display: 'flex', justifyContent: 'center', background: '#ffffff', padding: '6px' }}
+                onClick={() => onZoomScreenshot(trade.screenshot)}
+              >
+                <img src={trade.screenshot} alt="Screenshot" style={{ maxWidth: '100%', maxHeight: '260px', objectFit: 'contain', display: 'block', borderRadius: '4px' }} />
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+              No screenshot uploaded for this trade log.
+            </div>
+          )}
+
           {/* Checklist Verification */}
           <div style={{ background: 'var(--bg-secondary)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
             <h4 style={{ margin: '0 0 10px', fontSize: '10.5px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--accent-color)', letterSpacing: '0.04em' }}>Checklist Verification</h4>
@@ -950,21 +979,6 @@ function TradeDetailModal({ trade, onClose }) {
             <NarrativeBlock icon={<ShieldAlert size={12} />} label="Improvements / Mistakes" content={trade.mistake_improve} color="var(--loss-red)" />
           </div>
 
-          {/* Screenshot Block */}
-          {trade.screenshot && (
-            <div style={{ background: 'var(--bg-secondary)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <h4 style={{ margin: '0 0 10px', fontSize: '10.5px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--accent-color)', letterSpacing: '0.04em' }}>📸 Screenshot</h4>
-              <div 
-                style={{ borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'zoom-in', display: 'flex', justifyContent: 'center', background: 'var(--bg-card)', padding: '6px' }}
-                onClick={() => {
-                  const win = window.open();
-                  win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-                }}
-              >
-                <img src={trade.screenshot} alt="Screenshot" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', display: 'block', borderRadius: '4px' }} />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

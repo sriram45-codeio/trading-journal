@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
-import { X, BookOpen, Brain, ShieldAlert, Pencil, Trash2, Calendar, Clock, TrendingUp, BarChart3, Target, Activity, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, BookOpen, Brain, ShieldAlert, Pencil, Trash2, Calendar, Clock, TrendingUp, BarChart3, Target, Activity, Download, ZoomIn, Image as ImageIcon } from 'lucide-react';
 import api from '../../api/axios';
 
 export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit, onDelete }) {
+  const [showZoom, setShowZoom] = useState(false);
+
   const handleDownloadPdf = async () => {
     try {
       const response = await api.get(`/trades/${trade.id}/export-pdf`, { responseType: 'blob' });
@@ -16,6 +18,7 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
       console.error('Failed to download individual trade PDF:', err);
     }
   };
+
   useEffect(() => {
     const handleEscape = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEscape);
@@ -37,10 +40,43 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
   return (
     <>
       <div className="drawer-overlay" onClick={onClose} />
+      
+      {/* Lightbox Image Overlay */}
+      {showZoom && trade.screenshot && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15, 23, 42, 0.9)', zIndex: 999999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px', backdropFilter: 'blur(8px)',
+          }}
+          onClick={() => setShowZoom(false)}
+        >
+          <button
+            onClick={() => setShowZoom(false)}
+            style={{
+              position: 'absolute', top: '20px', right: '24px',
+              background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '50%', width: '40px', height: '40px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', cursor: 'pointer',
+            }}
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={trade.screenshot}
+            alt="Trade Screenshot Full"
+            style={{ maxWidth: '92vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 12px 48px rgba(0,0,0,0.5)' }}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       <div className="drawer-panel">
         {/* Header */}
         <div style={{
-          padding: '18px 22px',
+          padding: '16px 20px',
           borderBottom: '1px solid var(--border-color)',
           background: 'var(--bg-secondary)',
           display: 'flex',
@@ -50,15 +86,15 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
           top: 0,
           zIndex: 10,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-              Trade Details
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>
+              Trade Log Details
             </span>
             <span style={{
               fontSize: '11px',
               fontWeight: '700',
-              background: 'rgba(255, 87, 34, 0.08)',
-              border: '1px solid rgba(255, 87, 34, 0.25)',
+              background: 'var(--accent-light)',
+              border: '1px solid var(--accent-border)',
               color: 'var(--accent-color)',
               padding: '2px 8px',
               borderRadius: '4px',
@@ -68,29 +104,28 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
           </div>
           <button
             onClick={onClose}
-            className="action-icon-btn"
-            style={{ border: '1px solid var(--border-color)' }}
+            style={{ border: '1px solid var(--border-color)', background: 'transparent', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             id="drawer-close-btn"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
         {/* Hero P&L Section */}
         <div style={{
-          padding: '24px 22px',
+          padding: '20px 22px',
           background: isWin
-            ? 'linear-gradient(135deg, rgba(46, 189, 133, 0.06) 0%, transparent 100%)'
-            : 'linear-gradient(135deg, rgba(223, 81, 76, 0.06) 0%, transparent 100%)',
+            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, transparent 100%)'
+            : 'linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, transparent 100%)',
           borderBottom: '1px solid var(--border-color)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '14px' }}>
             <div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+              <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                 Net Profit & Loss
               </div>
               <span className="num" style={{
-                fontSize: '32px',
+                fontSize: '30px',
                 fontWeight: '800',
                 color: pnlColor,
                 lineHeight: 1,
@@ -112,7 +147,7 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '12px',
+            gap: '10px',
           }}>
             <QuickStat icon={<Calendar size={12} />} label="Date" value={trade.trade_date} />
             <QuickStat icon={<Clock size={12} />} label="Time" value={trade.trade_time || '—'} />
@@ -121,23 +156,71 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
           </div>
         </div>
 
+        {/* PROMINENT UPLOADED SCREENSHOT PHOTO SECTION */}
+        {trade.screenshot ? (
+          <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border-color)', background: '#f0f9ff' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '10px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-color)' }}>
+                <ImageIcon size={14} />
+                <span style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Uploaded Trade Chart Screenshot
+                </span>
+              </div>
+              <button
+                onClick={() => setShowZoom(true)}
+                className="kite-btn kite-btn-blue"
+                style={{ padding: '4px 10px', fontSize: '11px', gap: '4px' }}
+              >
+                <ZoomIn size={12} /> Full Image View
+              </button>
+            </div>
+            <div
+              onClick={() => setShowZoom(true)}
+              style={{
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: '1.5px solid var(--accent-border)',
+                background: '#ffffff',
+                cursor: 'zoom-in',
+                padding: '6px',
+                boxShadow: 'var(--shadow-card)'
+              }}
+            >
+              <img
+                src={trade.screenshot}
+                alt="Trade Screenshot Preview"
+                style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', display: 'block', borderRadius: '6px' }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-primary)' }}>
+            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontStyle: 'italic' }}>No screenshot attached for this trade log.</span>
+          </div>
+        )}
+
         {/* Checklist Section */}
-        <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border-color)' }}>
           <div style={{
             fontSize: '11px',
             fontWeight: '700',
             color: 'var(--text-muted)',
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            marginBottom: '14px',
+            letterSpacing: '0.05em',
+            marginBottom: '12px',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
           }}>
             <Target size={12} />
-            Trade Checklist
+            Trade Checklist & Level Tap
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             <ChecklistItem label="Market Bias" value={trade.bias || '—'} accent={trade.bias === 'Bullish' ? 'var(--win-green)' : trade.bias === 'Bearish' ? 'var(--loss-red)' : null} />
             <ChecklistItem label="Key Level" value={trade.key_level || '—'} />
             <ChecklistItem label="Key Level Tap" value={trade.key_level_tap} isBoolean />
@@ -146,86 +229,47 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
         </div>
 
         {/* Narrative Logs */}
-        <div style={{ padding: '20px 22px' }}>
+        <div style={{ padding: '18px 22px' }}>
           <div style={{
             fontSize: '11px',
             fontWeight: '700',
             color: 'var(--text-muted)',
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            marginBottom: '16px',
+            letterSpacing: '0.05em',
+            marginBottom: '14px',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
           }}>
             <BarChart3 size={12} />
-            Journal Notes
+            Journal Notes & Retrospective
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <NarrativeSection
-              icon={<BookOpen size={14} />}
+              icon={<BookOpen size={13} />}
               title="Why This Trade?"
               content={trade.why_this_trade}
               color="var(--accent-color)"
             />
             <NarrativeSection
-              icon={<Brain size={14} />}
+              icon={<Brain size={13} />}
               title="Mindset & Psychology"
               content={trade.emotion_mindset}
               color="var(--accent-color)"
             />
             <NarrativeSection
-              icon={<ShieldAlert size={14} />}
+              icon={<ShieldAlert size={13} />}
               title="Actionable Improvements"
               content={trade.mistake_improve}
               color="var(--loss-red)"
             />
           </div>
-          {trade.screenshot && (
-            <div style={{ marginTop: '20px' }}>
-              <div style={{
-                fontSize: '11px',
-                fontWeight: '700',
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}>
-                📸 Screenshot of Trade
-              </div>
-              <div 
-                style={{
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  border: '1.5px solid var(--border-color)',
-                  cursor: 'zoom-in',
-                  background: 'var(--bg-card)',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  padding: '8px'
-                }}
-                onClick={() => {
-                  const win = window.open();
-                  win.document.write(`<iframe src="${trade.screenshot}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-                }}
-              >
-                <img 
-                  src={trade.screenshot} 
-                  alt="Trade Screenshot" 
-                  style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', display: 'block', borderRadius: '6px' }} 
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Actions Footer */}
         <div style={{
-          padding: '16px 22px',
+          padding: '14px 22px',
           borderTop: '1px solid var(--border-color)',
           background: 'var(--bg-secondary)',
           display: 'flex',
@@ -236,7 +280,7 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
           <button
             onClick={() => { onEdit(trade); onClose(); }}
             className="kite-btn kite-btn-blue"
-            style={{ flex: 1, justifyContent: 'center', padding: '10px' }}
+            style={{ flex: 1, justifyContent: 'center', padding: '9px' }}
             id="drawer-btn-edit"
           >
             <Pencil size={13} />
@@ -244,8 +288,8 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
           </button>
           <button
             onClick={handleDownloadPdf}
-            className="kite-btn kite-btn-orange"
-            style={{ padding: '10px 16px' }}
+            className="kite-btn kite-btn-ghost"
+            style={{ padding: '9px 14px', color: 'var(--accent-color)' }}
             id="drawer-btn-pdf"
           >
             <Download size={13} />
@@ -254,11 +298,11 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
           <button
             onClick={() => { onDelete(trade); onClose(); }}
             className="kite-btn kite-btn-ghost"
-            style={{ padding: '10px 16px', color: 'var(--loss-red)', borderColor: 'rgba(223, 81, 76, 0.25)' }}
+            style={{ padding: '9px 14px', color: 'var(--loss-red)', borderColor: '#fecaca' }}
             id="drawer-btn-delete"
           >
             <Trash2 size={13} />
-            Archive
+            Delete
           </button>
         </div>
       </div>
@@ -272,13 +316,13 @@ function QuickStat({ icon, label, value }) {
       background: 'var(--bg-card)',
       border: '1px solid var(--border-color)',
       borderRadius: '8px',
-      padding: '10px 12px',
+      padding: '8px 10px',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', marginBottom: '3px' }}>
         {icon}
         <span style={{ fontSize: '10px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
       </div>
-      <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{value}</span>
+      <span style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-primary)' }}>{value}</span>
     </div>
   );
 }
@@ -290,7 +334,7 @@ function ChecklistItem({ label, value, accent, isBoolean }) {
       background: 'var(--bg-card)',
       border: '1px solid var(--border-color)',
       borderRadius: '8px',
-      padding: '10px 14px',
+      padding: '8px 12px',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -301,7 +345,7 @@ function ChecklistItem({ label, value, accent, isBoolean }) {
           fontSize: '11px',
           fontWeight: '700',
           color: isYes ? 'var(--win-green)' : 'var(--loss-red)',
-          background: isYes ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
+          background: isYes ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
           padding: '2px 8px',
           borderRadius: '4px',
         }}>
@@ -319,32 +363,32 @@ function NarrativeSection({ icon, title, content, color }) {
     <div style={{
       background: 'var(--bg-card)',
       border: '1px solid var(--border-color)',
-      borderRadius: '10px',
-      padding: '16px',
+      borderRadius: '8px',
+      padding: '12px 14px',
     }}>
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
-        marginBottom: '10px',
+        gap: '6px',
+        marginBottom: '6px',
         color,
       }}>
         {icon}
         <span style={{
-          fontSize: '11px',
-          fontWeight: '700',
+          fontSize: '10.5px',
+          fontWeight: '800',
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
+          letterSpacing: '0.04em',
         }}>
           {title}
         </span>
       </div>
       <p style={{
-        fontSize: '13px',
+        fontSize: '12px',
         color: 'var(--text-primary)',
         margin: 0,
         whiteSpace: 'pre-wrap',
-        lineHeight: '1.6',
+        lineHeight: '1.5',
       }}>
         {content || 'No notes logged for this section.'}
       </p>
