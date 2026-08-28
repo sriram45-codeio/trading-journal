@@ -4,6 +4,7 @@ import api from '../api/axios';
 import TradeForm from './TradeForm';
 import TradeTable from './TradeTable';
 import EditModal from './EditModal';
+import TradeDetailDrawer from './report/TradeDetailDrawer';
 import Toast from './Toast';
 
 export default function TradeLog() {
@@ -11,6 +12,7 @@ export default function TradeLog() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTrade, setEditingTrade] = useState(null);
+  const [viewingTrade, setViewingTrade] = useState(null);
   const [filters, setFilters] = useState({ asset: '', outcome: '' });
   const [appliedFilters, setAppliedFilters] = useState({ asset: '', outcome: '' });
   const [toast, setToast] = useState(null);
@@ -40,6 +42,20 @@ export default function TradeLog() {
       setShowForm(false);
     } catch (err) {
       setToast({ message: err.response?.data?.error || 'Failed to log trade', type: 'error' });
+    }
+  };
+
+  const handleDownloadPdf = async (trade) => {
+    try {
+      const response = await api.get(`/trades/${trade.id}/export-pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trade-${trade.id}-report.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setToast({ message: 'Failed to download trade PDF', type: 'error' });
     }
   };
 
@@ -105,9 +121,34 @@ export default function TradeLog() {
           setFilters({ asset: '', outcome: '' });
           setAppliedFilters({ asset: '', outcome: '' });
         }}
+        onView={(trade) => setViewingTrade(trade)}
+        onDownloadPdf={handleDownloadPdf}
         onEdit={(trade) => setEditingTrade(trade)}
         onDelete={handleDeleteTrade}
       />
+
+      {/* ── Trade Detail Drawer (Eye Button) ── */}
+      {viewingTrade && (() => {
+        const chronologicalTrades = [...trades].sort((a, b) => {
+          const dateA = new Date(a.trade_date + (a.trade_time ? 'T' + a.trade_time : 'T00:00:00'));
+          const dateB = new Date(b.trade_date + (b.trade_time ? 'T' + b.trade_time : 'T00:00:00'));
+          if (dateA - dateB !== 0) return dateA - dateB;
+          return a.id - b.id;
+        });
+        const tradeNumberMap = {};
+        chronologicalTrades.forEach((t, i) => {
+          tradeNumberMap[t.id] = i + 1;
+        });
+        return (
+          <TradeDetailDrawer
+            trade={viewingTrade}
+            tradeNumber={tradeNumberMap[viewingTrade.id]}
+            onClose={() => setViewingTrade(null)}
+            onEdit={(t) => { setViewingTrade(null); setEditingTrade(t); }}
+            onDelete={(t) => { setViewingTrade(null); handleDeleteTrade(t); }}
+          />
+        );
+      })()}
 
       {/* ── Edit Modal ── */}
       {editingTrade && (

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Pencil, Trash2, AlertCircle, Search, Filter, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight, ZoomIn, X, Image as ImageIcon } from 'lucide-react';
+import { Eye, Download, Pencil, Trash2, AlertCircle, Search, Filter, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight, ZoomIn, X, Image as ImageIcon } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
-export default function TradeTable({ trades, onEdit, onDelete, loading, filters, setFilters, onApplyFilters, onClearFilters }) {
+export default function TradeTable({ trades, onView, onDownloadPdf, onEdit, onDelete, loading, filters, setFilters, onApplyFilters, onClearFilters }) {
   const [expandedTradeId, setExpandedTradeId] = useState(null);
   const [lightboxScreenshot, setLightboxScreenshot] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -265,6 +265,12 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }} onClick={e => e.stopPropagation()}>
+                            <ActionBtn onClick={() => onView && onView(trade)} title="View trade details" id={`btn-view-${trade.id}`} color="var(--accent-color)">
+                              <Eye size={13} />
+                            </ActionBtn>
+                            <ActionBtn onClick={() => onDownloadPdf && onDownloadPdf(trade)} title="Download PDF Runsheet" id={`btn-pdf-${trade.id}`} color="var(--accent-color)">
+                              <Download size={13} />
+                            </ActionBtn>
                             <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="var(--accent-color)">
                               <Pencil size={13} />
                             </ActionBtn>
