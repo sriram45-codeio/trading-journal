@@ -67,8 +67,7 @@ async function uploadTradeScreenshot(imageData, userId = 'default') {
       Bucket: bucketName,
       Key: key,
       Body: buffer,
-      ContentType: contentType,
-      ACL: 'public-read' // Attempts public-read; if bucket blocks ACLs, S3 endpoint / policy handles it
+      ContentType: contentType
     });
 
     await s3Client.send(command);

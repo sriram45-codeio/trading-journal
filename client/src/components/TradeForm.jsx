@@ -65,43 +65,53 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (event) => {
+      const rawDataUrl = event.target.result;
+      if (!rawDataUrl) return;
+
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1000;
-        const MAX_HEIGHT = 1000;
-        let width = img.width;
-        let height = img.height;
+        try {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1000;
+          const MAX_HEIGHT = 1000;
+          let width = img.width;
+          let height = img.height;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
           }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
+
+          canvas.width = Math.floor(width);
+          canvas.height = Math.floor(height);
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let base64 = canvas.toDataURL('image/jpeg', 0.65);
+          
+          if (base64.length > 500000) {
+            base64 = canvas.toDataURL('image/jpeg', 0.45);
           }
+
+          setFormData(prev => ({ ...prev, screenshot: base64 }));
+        } catch (canvasErr) {
+          console.error('Canvas compression error, using raw image:', canvasErr);
+          setFormData(prev => ({ ...prev, screenshot: rawDataUrl }));
         }
-
-        canvas.width = Math.floor(width);
-        canvas.height = Math.floor(height);
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0, width, height);
-
-        let base64 = canvas.toDataURL('image/jpeg', 0.65);
-        
-        // If image Base64 string is still over 500KB, apply second-pass compression
-        if (base64.length > 500000) {
-          base64 = canvas.toDataURL('image/jpeg', 0.45);
-        }
-
-        setFormData(prev => ({ ...prev, screenshot: base64 }));
       };
-      img.src = event.target.result;
+      img.onerror = () => {
+        setFormData(prev => ({ ...prev, screenshot: rawDataUrl }));
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
