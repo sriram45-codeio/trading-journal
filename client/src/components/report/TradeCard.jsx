@@ -348,7 +348,10 @@ export default function TradeCard({ trade, index, tradeNumber, isExpanded, onTog
 function ActionBtn({ onClick, title, id, color, children }) {
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (onClick) onClick(e);
+      }}
       title={title}
       id={id}
       style={{

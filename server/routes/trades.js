@@ -8,6 +8,27 @@ const db = require('../db/database');
 router.use(authMiddleware);
 
 const s3Service = require('../services/s3Service');
+const axios = require('axios');
+
+async function getImageBuffer(screenshotStr) {
+  if (!screenshotStr || typeof screenshotStr !== 'string') return null;
+  try {
+    if (screenshotStr.startsWith('http://') || screenshotStr.startsWith('https://')) {
+      const res = await axios.get(screenshotStr, { responseType: 'arraybuffer', timeout: 8000 });
+      return Buffer.from(res.data);
+    } else {
+      let base64Data = screenshotStr;
+      if (screenshotStr.includes('base64,')) {
+        base64Data = screenshotStr.split('base64,')[1];
+      }
+      base64Data = base64Data.replace(/\s/g, '');
+      return Buffer.from(base64Data, 'base64');
+    }
+  } catch (err) {
+    console.error('[PDF Export] getImageBuffer error:', err.message);
+    return null;
+  }
+}
 
 router.post('/upload-photo', async (req, res) => {
   try {
@@ -206,21 +227,17 @@ router.get('/export-pdf', async (req, res) => {
       if (trade.screenshot) {
         checkPageBreak(160);
         try {
-          let base64Data = trade.screenshot;
-          if (trade.screenshot.includes('base64,')) {
-            base64Data = trade.screenshot.split('base64,')[1];
+          const imageBuffer = await getImageBuffer(trade.screenshot);
+          if (imageBuffer) {
+            doc.moveDown(0.3);
+            doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
+            doc.moveDown(0.3);
+            doc.image(imageBuffer, {
+              fit: [cardWidth - 20, 140],
+              align: 'center'
+            });
+            doc.moveDown(0.6);
           }
-          base64Data = base64Data.replace(/\s/g, '');
-          const imageBuffer = Buffer.from(base64Data, 'base64');
-
-          doc.moveDown(0.3);
-          doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#f35936').text('ATTACHED TRADE SCREENSHOT:');
-          doc.moveDown(0.3);
-          doc.image(imageBuffer, {
-            fit: [cardWidth - 20, 140],
-            align: 'center'
-          });
-          doc.moveDown(0.6);
         } catch (imageErr) {
           console.error('Error drawing image in overall PDF:', imageErr.message);
         }
@@ -690,21 +707,17 @@ router.get('/:id/export-pdf', async (req, res) => {
     if (trade.screenshot) {
       checkPageBreak(250);
       try {
-        let base64Data = trade.screenshot;
-        if (trade.screenshot.includes('base64,')) {
-          base64Data = trade.screenshot.split('base64,')[1];
+        const imageBuffer = await getImageBuffer(trade.screenshot);
+        if (imageBuffer) {
+          doc.moveDown(0.5);
+          doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#06b6d4').text('ATTACHED TRADE SCREENSHOT');
+          doc.moveDown(0.4);
+          doc.image(imageBuffer, {
+            fit: [doc.page.width - 80, 240],
+            align: 'center'
+          });
+          doc.moveDown(1);
         }
-        base64Data = base64Data.replace(/\s/g, '');
-        const imageBuffer = Buffer.from(base64Data, 'base64');
-
-        doc.moveDown(0.5);
-        doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#06b6d4').text('ATTACHED TRADE SCREENSHOT');
-        doc.moveDown(0.4);
-        doc.image(imageBuffer, {
-          fit: [doc.page.width - 80, 240],
-          align: 'center'
-        });
-        doc.moveDown(1);
       } catch (imageErr) {
         console.error('Error drawing image in single PDF:', imageErr.message);
       }
