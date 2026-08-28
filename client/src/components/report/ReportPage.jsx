@@ -88,6 +88,8 @@ export default function ReportPage() {
   const [searchText, setSearchText] = useState('');
   const [outcomeFilter, setOutcomeFilter] = useState('');
   const [sessionFilter, setSessionFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const [showForm, setShowForm] = useState(false);
   const [expandedTradeId, setExpandedTradeId] = useState(null);
@@ -326,6 +328,10 @@ export default function ReportPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {(() => {
+            const totalPages = Math.ceil(filteredTrades.length / pageSize) || 1;
+            const startIndex = (currentPage - 1) * pageSize;
+            const paginatedTrades = filteredTrades.slice(startIndex, startIndex + pageSize);
+
             // Sort trades chronologically (oldest first) to assign sequential trade numbers
             const chronologicalTrades = [...trades].sort((a, b) => {
               const dateA = new Date(a.trade_date + (a.trade_time ? 'T' + a.trade_time : 'T00:00:00'));
@@ -338,35 +344,95 @@ export default function ReportPage() {
               tradeNumberMap[t.id] = i + 1;
             });
 
-            return filteredTrades.map((trade, index) => (
-              <TradeCard
-                key={trade.id}
-                trade={trade}
-                index={index}
-                tradeNumber={tradeNumberMap[trade.id] || index + 1}
-                isExpanded={expandedTradeId === trade.id}
-                onToggleExpand={(id) => setExpandedTradeId(expandedTradeId === id ? null : id)}
-                onView={(t) => setViewingTrade(t)}
-                onEdit={(t) => setEditingTrade(t)}
-                onDelete={(t) => setDeletingTrade(t)}
-              />
-            ));
-          })()}
+            return (
+              <>
+                {paginatedTrades.map((trade, index) => (
+                  <TradeCard
+                    key={trade.id}
+                    trade={trade}
+                    index={index}
+                    tradeNumber={tradeNumberMap[trade.id] || index + 1}
+                    isExpanded={expandedTradeId === trade.id}
+                    onToggleExpand={(id) => setExpandedTradeId(expandedTradeId === id ? null : id)}
+                    onView={(t) => setViewingTrade(t)}
+                    onEdit={(t) => setEditingTrade(t)}
+                    onDelete={(t) => setDeletingTrade(t)}
+                  />
+                ))}
 
-          {/* Footer */}
-          <div style={{
-            padding: '14px 0',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>
-              Showing {filteredTrades.length} trade{filteredTrades.length !== 1 ? 's' : ''}
-              {(searchText || outcomeFilter || sessionFilter) && ` (filtered)`}
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#06b6d4' }} />
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Live · auto-refreshes every 30s</span>
-            </div>
-          </div>
+                {/* Footer & Pagination Bar */}
+                <div style={{
+                  padding: '14px 18px',
+                  marginTop: '10px',
+                  background: 'var(--bg-card)',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: 'var(--radius-card)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  flexWrap: 'wrap', gap: '12px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: '500' }}>
+                      Showing {filteredTrades.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + pageSize, filteredTrades.length)} of {filteredTrades.length} trades
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Per page:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                        style={{
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '4px',
+                          padding: '2px 6px',
+                          fontSize: '11.5px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Pagination buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="kite-btn kite-btn-ghost"
+                      style={{
+                        padding: '4px 12px',
+                        fontSize: '11.5px',
+                        opacity: currentPage === 1 ? 0.4 : 1,
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      ← Prev
+                    </button>
+                    <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage >= totalPages}
+                      className="kite-btn kite-btn-ghost"
+                      style={{
+                        padding: '4px 12px',
+                        fontSize: '11.5px',
+                        opacity: currentPage >= totalPages ? 0.4 : 1,
+                        cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 

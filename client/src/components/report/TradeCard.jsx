@@ -182,6 +182,7 @@ export default function TradeCard({ trade, index, tradeNumber, isExpanded, onTog
                 <img
                   src={trade.screenshot}
                   alt="Screenshot"
+                  loading="lazy"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
                 <div style={{
@@ -324,6 +325,7 @@ export default function TradeCard({ trade, index, tradeNumber, isExpanded, onTog
                   <img
                     src={trade.screenshot}
                     alt="Trade Screenshot"
+                    loading="lazy"
                     style={{
                       width: '100%', maxHeight: '180px',
                       objectFit: 'contain', borderRadius: '6px',

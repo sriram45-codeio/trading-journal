@@ -10,7 +10,7 @@ import TradeCapital from './components/TradeCapital';
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
-  const [theme, setTheme] = useState(() => localStorage.getItem('tj_theme') || 'dark');
+  const [theme, setTheme] = useState(() => localStorage.getItem('tj_theme') || 'light');
 
   useEffect(() => {
     const token = localStorage.getItem('tj_token');

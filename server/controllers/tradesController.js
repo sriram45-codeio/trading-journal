@@ -1,4 +1,5 @@
 const db = require('../db/database');
+const s3Service = require('../services/s3Service');
 
 // Parse "1:2" → 2, "1:3" → 3, etc. Default to 1 if invalid.
 function parseRRMultiplier(rrStr) {
@@ -50,6 +51,9 @@ async function createTrade(req, res) {
   }
 
   try {
+    // Process image: upload to S3 if configured or return base64 string
+    const processedScreenshot = screenshot ? await s3Service.uploadTradeScreenshot(screenshot, req.user.id) : null;
+
     const insertResult = await db.query(`
       INSERT INTO trades (
         user_id, session, bias, key_level, key_level_tap, cisd,
@@ -75,7 +79,7 @@ async function createTrade(req, res) {
       why_this_trade || null,
       emotion_mindset || null,
       mistake_improve || null,
-      screenshot || null
+      processedScreenshot || null
     ]);
 
     const trade = insertResult.rows[0];
@@ -109,27 +113,53 @@ async function getRunningBalancesMap(userId) {
 }
 
 async function getAllTrades(req, res) {
-  const { asset, outcome } = req.query;
+  const { asset, outcome, page, limit } = req.query;
 
   try {
     let query = 'SELECT * FROM trades WHERE user_id = $1 AND deleted_at IS NULL';
+    let countQuery = 'SELECT COUNT(*) as total FROM trades WHERE user_id = $1 AND deleted_at IS NULL';
     const params = [req.user.id];
+    const countParams = [req.user.id];
     let paramCount = 1;
 
     if (asset) {
       paramCount++;
-      query += ` AND (session ILIKE $${paramCount} OR bias ILIKE $${paramCount} OR key_level ILIKE $${paramCount} OR why_this_trade ILIKE $${paramCount})`;
+      const clause = ` AND (session ILIKE $${paramCount} OR bias ILIKE $${paramCount} OR key_level ILIKE $${paramCount} OR why_this_trade ILIKE $${paramCount})`;
+      query += clause;
+      countQuery += clause;
       const likeParam = `%${asset}%`;
       params.push(likeParam);
+      countParams.push(likeParam);
     }
 
     if (outcome) {
       paramCount++;
-      query += ` AND outcome = $${paramCount}`;
+      const clause = ` AND outcome = $${paramCount}`;
+      query += clause;
+      countQuery += clause;
       params.push(outcome);
+      countParams.push(outcome);
     }
 
     query += ' ORDER BY trade_date DESC, created_at DESC, id DESC';
+
+    const countRes = await db.query(countQuery, countParams);
+    const totalCount = parseInt(countRes.rows[0]?.total || 0, 10);
+
+    // Support pagination if requested
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const usePagination = !isNaN(pageNum) && !isNaN(limitNum) && limitNum > 0;
+
+    if (usePagination) {
+      const offset = (pageNum - 1) * limitNum;
+      paramCount++;
+      query += ` LIMIT $${paramCount}`;
+      params.push(limitNum);
+      paramCount++;
+      query += ` OFFSET $${paramCount}`;
+      params.push(offset);
+    }
 
     const tradesRes = await db.query(query, params);
     const { startingCapital, balanceMap } = await getRunningBalancesMap(req.user.id);
@@ -139,7 +169,20 @@ async function getAllTrades(req, res) {
       balance_after: balanceMap[t.id] !== undefined ? balanceMap[t.id] : startingCapital
     }));
 
-    res.status(200).json({ trades });
+    res.status(200).json({
+      trades,
+      pagination: usePagination ? {
+        total: totalCount,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum)
+      } : {
+        total: totalCount,
+        page: 1,
+        limit: totalCount,
+        totalPages: 1
+      }
+    });
   } catch (error) {
     console.error('Get trades error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -195,6 +238,11 @@ async function updateTrade(req, res) {
       outcome = 'HOLD';
     }
 
+    let processedScreenshot = existingTrade.screenshot;
+    if (screenshot !== undefined && screenshot !== null) {
+      processedScreenshot = await s3Service.uploadTradeScreenshot(screenshot, req.user.id);
+    }
+
     const updateResult = await db.query(`
       UPDATE trades SET
         session = $1, bias = $2, key_level = $3, key_level_tap = $4, cisd = $5,
@@ -220,7 +268,7 @@ async function updateTrade(req, res) {
       why_this_trade !== undefined ? why_this_trade : existingTrade.why_this_trade,
       emotion_mindset !== undefined ? emotion_mindset : existingTrade.emotion_mindset,
       mistake_improve !== undefined ? mistake_improve : existingTrade.mistake_improve,
-      screenshot !== undefined ? screenshot : existingTrade.screenshot,
+      processedScreenshot,
       tradeId,
       req.user.id
     ]);

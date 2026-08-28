@@ -5,11 +5,17 @@ import CustomSelect from './CustomSelect';
 export default function TradeTable({ trades, onEdit, onDelete, loading, filters, setFilters, onApplyFilters, onClearFilters }) {
   const [expandedTradeId, setExpandedTradeId] = useState(null);
   const [lightboxScreenshot, setLightboxScreenshot] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const toggleExpand = (id, e) => {
     if (e.target.closest('button') || e.target.closest('svg')) return;
     setExpandedTradeId(expandedTradeId === id ? null : id);
   };
+
+  const totalPages = Math.ceil(trades.length / pageSize) || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedTrades = trades.slice(startIndex, startIndex + pageSize);
 
   if (loading) {
     return (
@@ -142,7 +148,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {trades.map((trade, index) => {
+          {paginatedTrades.map((trade, index) => {
             const pnlPos = trade.net_pnl > 0;
             const pnlNeg = trade.net_pnl < 0;
             const isWin = trade.outcome === 'WIN';
@@ -251,7 +257,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                       onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
                       title="Click to view screenshot"
                     >
-                      <img src={trade.screenshot} alt="Screenshot" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <img src={trade.screenshot} alt="Screenshot" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       <div style={{
                         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -345,6 +351,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                           <img
                             src={trade.screenshot}
                             alt="Screenshot"
+                            loading="lazy"
                             style={{
                               width: '100%', maxHeight: '180px', objectFit: 'contain',
                               borderRadius: '6px', border: '1px solid var(--border-color)',
@@ -361,14 +368,77 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
             );
           })}
 
-          {/* Footer */}
-          <div style={{ padding: '12px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>
-              Showing {trades.length} trade{trades.length !== 1 ? 's' : ''}
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px rgba(255, 87, 34, 0.4)' }} />
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Click any row to expand details</span>
+          {/* Footer & Pagination Controls */}
+          <div style={{
+            padding: '14px 16px',
+            marginTop: '8px',
+            background: 'var(--bg-card)',
+            border: '1.5px solid var(--border-color)',
+            borderRadius: 'var(--radius-card)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: '500' }}>
+                Showing {trades.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + pageSize, trades.length)} of {trades.length} trades
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  style={{
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '4px',
+                    padding: '2px 6px',
+                    fontSize: '11.5px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Pagination buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="kite-btn kite-btn-ghost"
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '11.5px',
+                  opacity: currentPage === 1 ? 0.4 : 1,
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                }}
+              >
+                ← Prev
+              </button>
+              <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="kite-btn kite-btn-ghost"
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '11.5px',
+                  opacity: currentPage >= totalPages ? 0.4 : 1,
+                  cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Next →
+              </button>
             </div>
           </div>
         </div>

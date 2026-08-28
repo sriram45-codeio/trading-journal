@@ -7,6 +7,20 @@ const db = require('../db/database');
 
 router.use(authMiddleware);
 
+const s3Service = require('../services/s3Service');
+
+router.post('/upload-photo', async (req, res) => {
+  try {
+    const { photo } = req.body;
+    if (!photo) return res.status(400).json({ error: 'Photo payload required' });
+    const photoUrl = await s3Service.uploadTradeScreenshot(photo, req.user.id);
+    res.json({ photo_url: photoUrl, is_s3: s3Service.isS3Configured() });
+  } catch (err) {
+    console.error('Photo upload route error:', err);
+    res.status(500).json({ error: 'Photo upload failed: ' + err.message });
+  }
+});
+
 router.post('/', tradesController.createTrade);
 router.get('/', tradesController.getAllTrades);
 router.put('/:id', tradesController.updateTrade);

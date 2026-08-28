@@ -61,14 +61,14 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
   };
 
   const handleFile = (file) => {
-    if (!file) return;
+    if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1000;
-        const MAX_HEIGHT = 1000;
+        const MAX_WIDTH = 1400;
+        const MAX_HEIGHT = 1400;
         let width = img.width;
         let height = img.height;
 
@@ -89,12 +89,24 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        const base64 = canvas.toDataURL('image/jpeg', 0.7);
+        const base64 = canvas.toDataURL('image/jpeg', 0.75);
         setFormData(prev => ({ ...prev, screenshot: base64 }));
       };
       img.src = event.target.result;
     };
     reader.readAsDataURL(file);
+  };
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) handleFile(blob);
+        break;
+      }
+    }
   };
 
   const handleSubmit = (e) => {
@@ -107,10 +119,10 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
   };
 
   const isBuy = formData.direction === 'BUY';
-  const accentColor = isBuy ? '#4184f3' : '#df514c';
+  const accentColor = isBuy ? 'var(--buy-blue)' : 'var(--sell-red)';
 
   return (
-    <div className="kite-card" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+    <div className="kite-card" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-card)' }}>
       {/* Dynamic Buy/Sell Accent Header */}
       <div style={{
         background: accentColor,
@@ -118,10 +130,10 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        transition: 'background 0.25s ease',
+        transition: 'background 0.2s ease',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#fff', letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#fff', letterSpacing: '0.04em' }}>
             {initialData ? 'EDIT TRADE LOG' : isBuy ? 'LOG BUY ORDER' : 'LOG SELL ORDER'}
           </span>
           {/* Direction Toggle Pills */}
@@ -136,7 +148,7 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                 fontWeight: '700',
                 background: isBuy ? '#fff' : 'transparent',
                 border: 'none',
-                color: isBuy ? '#4184f3' : '#fff',
+                color: isBuy ? 'var(--buy-blue)' : '#fff',
                 cursor: 'pointer',
                 borderRadius: '16px',
                 transition: 'all 0.2s ease'
@@ -152,7 +164,7 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                 fontWeight: '700',
                 background: !isBuy ? '#fff' : 'transparent',
                 border: 'none',
-                color: !isBuy ? '#df514c' : '#fff',
+                color: !isBuy ? 'var(--sell-red)' : '#fff',
                 cursor: 'pointer',
                 borderRadius: '16px',
                 transition: 'all 0.2s ease'
@@ -354,6 +366,8 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
+                tabIndex={0}
+                onPaste={handlePaste}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -387,7 +401,7 @@ export default function TradeForm({ onSubmit, initialData, onCancel }) {
                   ) : (
                     <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0 }}>
                       <span style={{ fontSize: '18px' }}>📸</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Click or Drag screenshot to upload</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Click, Drag, or Paste (Ctrl+V) screenshot</span>
                       <input 
                         type="file" 
                         accept="image/*" 

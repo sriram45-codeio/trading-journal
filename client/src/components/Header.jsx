@@ -1,48 +1,48 @@
 import React from 'react';
-import { LayoutDashboard, List, LogOut, Sun, Moon, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, List, LogOut, Sun, Moon, BarChart3, Wallet } from 'lucide-react';
 
 export default function Header({ activePage, setActivePage, onLogout, theme, toggleTheme }) {
-  const userEmail = localStorage.getItem('tj_email') || 'user@example.com';
+  const userEmail = localStorage.getItem('tj_email') || 'admin@democompany.com';
 
   return (
     <header style={{
       background: 'var(--bg-secondary)',
-      borderBottom: '1.5px solid var(--border-color)',
-      height: '54px',
+      borderBottom: '1px solid var(--border-color)',
+      height: '56px',
       display: 'flex',
       alignItems: 'center',
-      paddingLeft: '20px',
-      paddingRight: '20px',
+      paddingLeft: '24px',
+      paddingRight: '24px',
       position: 'sticky',
       top: 0,
       zIndex: 100,
       flexShrink: 0,
-      transition: 'background-color 0.2s ease, border-color 0.2s ease'
+      boxShadow: 'var(--shadow-sm)'
     }}>
-      {/* Sleek Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '36px' }}>
+      {/* Brand Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '32px' }}>
         <div style={{
           background: 'var(--accent-color)',
-          width: '28px',
-          height: '28px',
+          width: '30px',
+          height: '30px',
           borderRadius: '8px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(255, 87, 34, 0.25)'
+          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
         }}>
-          <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+          <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
             <path d="M8 23 L16 9 L24 23" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
             <path d="M12 23 L16 16 L20 23" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="white" fillOpacity="0.4"/>
           </svg>
         </div>
-        <span style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-          ForexFlow
+        <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+          ForexFlow <span style={{ fontSize: '10px', color: 'var(--accent-color)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Console</span>
         </span>
       </div>
 
-      {/* Nav Links styled as modern rounded pills */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+      {/* Nav Tabs */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
         <NavTab
           label="Dashboard"
           icon={<LayoutDashboard size={14} />}
@@ -51,11 +51,18 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
           id="nav-dashboard"
         />
         <NavTab
-          label="Trade Log"
+          label="Trade Log & Report"
           icon={<List size={14} />}
           active={activePage === 'trades'}
           onClick={() => setActivePage('trades')}
           id="nav-trades"
+        />
+        <NavTab
+          label="Trade Capital"
+          icon={<Wallet size={14} />}
+          active={activePage === 'capital'}
+          onClick={() => setActivePage('capital')}
+          id="nav-capital"
         />
         <NavTab
           label="Trading Reports"
@@ -66,9 +73,9 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
         />
       </nav>
 
-      {/* Right side items */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* Premium Sliding Theme Switcher */}
+      {/* Right User Bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Theme Switcher */}
         <button
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -76,48 +83,41 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
             background: 'var(--bg-primary)',
             border: '1px solid var(--border-color)',
             borderRadius: '20px',
-            width: '54px',
-            height: '28px',
+            width: '50px',
+            height: '26px',
             position: 'relative',
             cursor: 'pointer',
             padding: '2px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            transition: 'all 0.2s ease',
             outline: 'none'
           }}
         >
-          {/* Animated sliding slider circle */}
           <div style={{
             position: 'absolute',
-            left: theme === 'dark' ? '3px' : '27px',
-            width: '22px',
-            height: '22px',
+            left: theme === 'dark' ? '3px' : '25px',
+            width: '20px',
+            height: '20px',
             borderRadius: '50%',
             background: 'var(--accent-color)',
-            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+            transition: 'all 0.2s ease',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            {theme === 'dark' ? (
-              <Moon size={11} color="#fff" />
-            ) : (
-              <Sun size={11} color="#fff" />
-            )}
+            {theme === 'dark' ? <Moon size={11} color="#fff" /> : <Sun size={11} color="#fff" />}
           </div>
-          
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-around', alignItems: 'center', pointerEvents: 'none' }}>
-            <Moon size={12} style={{ color: theme === 'dark' ? 'var(--accent-color)' : 'var(--text-muted)', opacity: theme === 'dark' ? 0 : 0.5 }} />
-            <Sun size={12} style={{ color: theme === 'light' ? 'var(--accent-color)' : 'var(--text-muted)', opacity: theme === 'light' ? 0 : 0.5 }} />
+            <Moon size={11} style={{ color: 'var(--text-muted)', opacity: theme === 'dark' ? 0 : 0.6 }} />
+            <Sun size={11} style={{ color: 'var(--text-muted)', opacity: theme === 'light' ? 0 : 0.6 }} />
           </div>
         </button>
 
         <span style={{
           fontSize: '12px',
-          color: 'var(--text-muted)',
+          fontWeight: '500',
+          color: 'var(--text-secondary)',
           maxWidth: '180px',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -129,29 +129,8 @@ export default function Header({ activePage, setActivePage, onLogout, theme, tog
         <button
           onClick={onLogout}
           id="btn-logout"
-          style={{
-            background: 'none',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-btn)',
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '12px',
-            padding: '5px 12px',
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => { 
-            e.currentTarget.style.color = '#df514c'; 
-            e.currentTarget.style.borderColor = 'rgba(223, 81, 76, 0.5)';
-            e.currentTarget.style.background = 'rgba(223, 81, 76, 0.05)';
-          }}
-          onMouseLeave={e => { 
-            e.currentTarget.style.color = 'var(--text-secondary)'; 
-            e.currentTarget.style.borderColor = 'var(--border-color)';
-            e.currentTarget.style.background = 'none';
-          }}
+          className="kite-btn kite-btn-ghost"
+          style={{ padding: '5px 12px', fontSize: '12px' }}
         >
           <LogOut size={13} />
           Logout
@@ -169,16 +148,16 @@ function NavTab({ label, icon, active, onClick, id }) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
+        gap: '7px',
         padding: '6px 14px',
-        borderRadius: 'var(--radius-btn)',
-        fontSize: '13px',
+        borderRadius: '6px',
+        fontSize: '12.5px',
         fontWeight: active ? '700' : '500',
         color: active ? 'var(--accent-color)' : 'var(--text-secondary)',
-        background: active ? 'rgba(255, 87, 34, 0.08)' : 'transparent',
+        background: active ? 'var(--accent-light)' : 'transparent',
         border: 'none',
         cursor: 'pointer',
-        transition: 'all 0.2s ease',
+        transition: 'all 0.18s ease',
         whiteSpace: 'nowrap',
       }}
       onMouseEnter={e => { 
