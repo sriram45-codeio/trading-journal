@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pencil, Trash2, AlertCircle, Search, Filter, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight, ZoomIn, X } from 'lucide-react';
+import { Pencil, Trash2, AlertCircle, Search, Filter, ChevronDown, ChevronUp, BookOpen, Brain, ShieldAlert, ArrowUpRight, ArrowDownRight, ZoomIn, X, Image as ImageIcon } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
 export default function TradeTable({ trades, onEdit, onDelete, loading, filters, setFilters, onApplyFilters, onClearFilters }) {
@@ -9,13 +9,25 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
   const [pageSize, setPageSize] = useState(25);
 
   const toggleExpand = (id, e) => {
-    if (e.target.closest('button') || e.target.closest('svg')) return;
+    if (e.target.closest('button') || e.target.closest('svg') || e.target.closest('img')) return;
     setExpandedTradeId(expandedTradeId === id ? null : id);
   };
 
   const totalPages = Math.ceil(trades.length / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedTrades = trades.slice(startIndex, startIndex + pageSize);
+
+  // Chronological Trade Numbering
+  const chronologicalTrades = [...trades].sort((a, b) => {
+    const dateA = new Date(a.trade_date + (a.trade_time ? 'T' + a.trade_time : 'T00:00:00'));
+    const dateB = new Date(b.trade_date + (b.trade_time ? 'T' + b.trade_time : 'T00:00:00'));
+    if (dateA - dateB !== 0) return dateA - dateB;
+    return a.id - b.id;
+  });
+  const tradeNumberMap = {};
+  chronologicalTrades.forEach((t, i) => {
+    tradeNumberMap[t.id] = i + 1;
+  });
 
   if (loading) {
     return (
@@ -25,7 +37,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
             height: '60px',
             borderRadius: 'var(--radius-card)',
             background: 'var(--bg-card)',
-            border: '1.5px solid var(--border-color)',
+            border: '1px solid var(--border-color)',
             animation: 'pulse 1.5s ease-in-out infinite',
           }} />
         ))}
@@ -35,12 +47,12 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
 
   return (
     <>
-      {/* ── Full-screen Lightbox ── */}
+      {/* ── Lightbox Modal ── */}
       {lightboxScreenshot && (
         <div
           style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.88)', zIndex: 99999,
+            background: 'rgba(15, 23, 42, 0.85)', zIndex: 99999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '24px', backdropFilter: 'blur(6px)',
           }}
@@ -50,7 +62,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
             onClick={() => setLightboxScreenshot(null)}
             style={{
               position: 'absolute', top: '20px', right: '24px',
-              background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '50%', width: '38px', height: '38px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff', cursor: 'pointer',
@@ -64,56 +76,56 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
             style={{
               maxWidth: '90vw', maxHeight: '88vh',
               objectFit: 'contain', borderRadius: '10px',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
             }}
             onClick={e => e.stopPropagation()}
           />
         </div>
       )}
+
       {/* ── Filters Bar ── */}
       <div style={{
         background: 'var(--bg-card)',
-        border: '1.5px solid var(--border-color)',
+        border: '1px solid var(--border-color)',
         borderRadius: 'var(--radius-card)',
         padding: '12px 16px',
-        marginBottom: '14px',
+        marginBottom: '16px',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
         flexWrap: 'wrap',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        boxShadow: 'var(--shadow-card)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--accent-color)', flexShrink: 0 }}>
-          <Filter size={13} />
+          <Filter size={14} />
           <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Filters</span>
         </div>
-        <div style={{ width: '1px', height: '22px', background: 'var(--border-color)', flexShrink: 0 }} />
+        <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', flexShrink: 0 }} />
 
         {/* Search */}
-        <div style={{ position: 'relative', flex: '1', minWidth: '160px', maxWidth: '280px' }}>
-          <Search size={12} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-color)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', flex: '1', minWidth: '180px', maxWidth: '280px' }}>
+          <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
           <input
             type="text"
             placeholder="Search session, bias, key level…"
             value={filters.asset}
             onChange={(e) => setFilters(prev => ({ ...prev, asset: e.target.value }))}
             className="kite-input"
-            style={{ paddingLeft: '28px', fontSize: '12.5px' }}
+            style={{ paddingLeft: '30px', fontSize: '12.5px' }}
             id="search-filter-text"
           />
         </div>
 
-        <div style={{ width: '1px', height: '22px', background: 'var(--border-color)', flexShrink: 0 }} />
+        <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', flexShrink: 0 }} />
 
         {/* Outcome Select */}
-        <div style={{ minWidth: '140px' }}>
+        <div style={{ minWidth: '150px' }}>
           <CustomSelect
             name="outcome"
             value={filters.outcome}
             onChange={(e) => setFilters(prev => ({ ...prev, outcome: e.target.value }))}
             options={[
-              { value: '', label: 'All Results', icon: '🔍' },
+              { value: '', label: 'All Outcomes', icon: '🔍' },
               { value: 'WIN', label: 'Wins Only', icon: '🟢' },
               { value: 'LOSS', label: 'Losses Only', icon: '🔴' },
             ]}
@@ -127,254 +139,194 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
         </div>
       </div>
 
-      {/* ── Trade Cards ── */}
+      {/* ── ChannelKonnect Structured Data Table ── */}
       {trades.length === 0 ? (
         <div style={{
-          textAlign: 'center', padding: '80px 20px',
+          textAlign: 'center', padding: '70px 20px',
           background: 'var(--bg-card)',
-          border: '1.5px solid var(--border-color)',
+          border: '1px solid var(--border-color)',
           borderRadius: 'var(--radius-card)',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+          boxShadow: 'var(--shadow-card)',
         }}>
           <div style={{
-            width: '64px', height: '64px', borderRadius: '50%',
-            background: 'rgba(255, 87, 34, 0.08)',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px',
+            width: '60px', height: '60px', borderRadius: '50%',
+            background: 'var(--accent-light)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px',
           }}>
-            <AlertCircle size={28} style={{ color: 'var(--accent-color)' }} />
+            <AlertCircle size={26} style={{ color: 'var(--accent-color)' }} />
           </div>
-          <p style={{ color: 'var(--text-primary)', fontSize: '14px', margin: '0 0 6px', fontWeight: '700' }}>No trade logs found</p>
-          <p style={{ color: 'var(--text-muted)', fontSize: '12.5px', margin: 0 }}>Click "Log Trade" above to record your first trade</p>
+          <p style={{ color: 'var(--text-primary)', fontSize: '14px', margin: '0 0 4px', fontWeight: '700' }}>No trade logs recorded</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '12.5px', margin: 0 }}>Click "Log Trade" above to log your first trade.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {paginatedTrades.map((trade, index) => {
-            const pnlPos = trade.net_pnl > 0;
-            const pnlNeg = trade.net_pnl < 0;
-            const isWin = trade.outcome === 'WIN';
-            const isBuy = trade.direction === 'BUY';
-            const isExpanded = expandedTradeId === trade.id;
-            const pnlColor = pnlPos ? 'var(--win-green)' : pnlNeg ? 'var(--loss-red)' : 'var(--text-muted)';
-            const dirColor = isBuy ? 'var(--buy-blue)' : 'var(--sell-red)';
-
-            return (
-              <div
-                key={trade.id}
-                className="stagger-fade-in"
-                style={{
-                  background: 'var(--bg-card)',
-                  border: `1.5px solid ${isExpanded ? 'var(--accent-color)' : 'var(--border-color)'}`,
-                  borderRadius: 'var(--radius-card)',
-                  overflow: 'hidden',
-                  boxShadow: isExpanded
-                    ? '0 0 0 2px rgba(255, 87, 34, 0.15), 0 4px 12px rgba(255, 87, 34, 0.1)'
-                    : '0 2px 8px rgba(0,0,0,0.04)',
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(10px)',
-                  animationDelay: `${index * 40}ms`,
-                }}
-                onClick={(e) => toggleExpand(trade.id, e)}
-                id={`trade-row-${trade.id}`}
-              >
-                {/* Row Header */}
-                <div style={{
-                  padding: '14px 18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
-                  background: isExpanded ? 'rgba(255, 87, 34, 0.04)' : 'transparent',
-                  borderBottom: isExpanded ? '1.5px solid var(--border-color)' : 'none',
-                  transition: 'background 0.15s ease',
-                }}>
-                  {/* Direction Icon */}
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: 'var(--radius-btn)', flexShrink: 0,
-                    background: isBuy ? 'rgba(65, 132, 243, 0.08)' : 'rgba(223, 81, 76, 0.08)',
-                    border: `1.5px solid ${isBuy ? 'rgba(65, 132, 243, 0.25)' : 'rgba(223, 81, 76, 0.25)'}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {isBuy ? <ArrowUpRight size={18} color="var(--buy-blue)" /> : <ArrowDownRight size={18} color="var(--sell-red)" />}
-                  </div>
-
-                  {/* Date & Session */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{trade.trade_date}</span>
-                      {trade.trade_time && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trade.trade_time}</span>}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
-                      {trade.session && (
-                        <span style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--accent-color)', background: 'rgba(255, 87, 34, 0.08)', padding: '1px 8px', borderRadius: '99px', border: '1px solid rgba(255, 87, 34, 0.2)' }}>
-                          {trade.session}
-                        </span>
-                      )}
-                      {trade.bias && (
-                        <span style={{ fontSize: '10.5px', fontWeight: '700', color: trade.bias === 'Bullish' ? 'var(--win-green)' : trade.bias === 'Bearish' ? 'var(--loss-red)' : 'var(--text-muted)' }}>
-                          {trade.bias}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Checklist Badges */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexShrink: 0 }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Key Level</div>
-                      <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontWeight: '600', maxWidth: '100px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trade.key_level || '—'}</span>
-                    </div>
-                    {[{ label: 'Tap', val: trade.key_level_tap }, { label: 'CISD', val: trade.cisd || 'NO' }].map(({ label, val }) => {
-                      const isYes = val === 'YES';
-                      return (
-                        <div key={label} style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>{label}</div>
-                          <div style={{
-                            width: '20px', height: '20px', borderRadius: '50%',
-                            background: isYes ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
-                            border: `1.5px solid ${isYes ? 'var(--win-green)' : 'var(--loss-red)'}`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            margin: '0 auto', fontSize: '9px', fontWeight: '800',
-                            color: isYes ? 'var(--win-green)' : 'var(--loss-red)',
-                          }}>
-                            {isYes ? '✓' : '✗'}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Screenshot inline thumbnail */}
-                  {trade.screenshot && (
-                    <div
-                      style={{
-                        width: '52px', height: '40px',
-                        borderRadius: '6px', overflow: 'hidden',
-                        border: '2px solid rgba(255, 87, 34, 0.35)',
-                        flexShrink: 0, cursor: 'zoom-in',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
-                        position: 'relative',
-                      }}
-                      onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
-                      title="Click to view screenshot"
-                    >
-                      <img src={trade.screenshot} alt="Screenshot" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      <div style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: 'rgba(0,0,0,0)',
-                        transition: 'background 0.15s',
-                      }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.35)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0)'}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-card)', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="kite-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '40px' }}></th>
+                  <th>Trade #</th>
+                  <th>Date & Time</th>
+                  <th>Session</th>
+                  <th>Bias & Key Level</th>
+                  <th style={{ textAlign: 'center' }}>Tap</th>
+                  <th style={{ textAlign: 'center' }}>CISD</th>
+                  <th>Order</th>
+                  <th style={{ textAlign: 'right' }}>Risk ($)</th>
+                  <th style={{ textAlign: 'center' }}>R:R</th>
+                  <th style={{ textAlign: 'center' }}>Outcome</th>
+                  <th style={{ textAlign: 'right' }}>Net P&L</th>
+                  <th style={{ textAlign: 'center' }}>Photo</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedTrades.map((trade) => {
+                  const isBuy = trade.direction === 'BUY';
+                  const isWin = trade.outcome === 'WIN';
+                  const isExpanded = expandedTradeId === trade.id;
+                  const pnlColor = trade.net_pnl > 0 ? 'var(--win-green)' : trade.net_pnl < 0 ? 'var(--loss-red)' : 'var(--text-muted)';
+                  
+                  return (
+                    <React.Fragment key={trade.id}>
+                      <tr 
+                        onClick={(e) => toggleExpand(trade.id, e)}
+                        style={{ cursor: 'pointer', background: isExpanded ? 'var(--accent-light)' : 'transparent' }}
                       >
-                        <ZoomIn size={12} color="#fff" style={{ opacity: 0.9 }} />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* P&L, Risk & Actions */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
-                    {trade.risk != null && (
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Risk</div>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', fontFamily: 'monospace' }}>${trade.risk.toFixed(0)}</span>
-                      </div>
-                    )}
-                    <div style={{ textAlign: 'right', minWidth: '84px' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '1px' }}>Net P&L</div>
-                      <span style={{ fontSize: '16px', fontWeight: '800', fontFamily: 'monospace', color: pnlColor, letterSpacing: '-0.5px' }}>
-                        {pnlPos ? '+' : ''}${trade.net_pnl.toFixed(2)}
-                      </span>
-                    </div>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      minWidth: '48px', padding: '4px 10px', borderRadius: 'var(--radius-badge)',
-                      fontSize: '11px', fontWeight: '800', letterSpacing: '0.04em',
-                      background: isWin ? 'rgba(0, 162, 124, 0.08)' : 'rgba(223, 81, 76, 0.08)',
-                      color: isWin ? 'var(--win-green)' : 'var(--loss-red)',
-                      border: `1px solid ${isWin ? 'rgba(0, 162, 124, 0.2)' : 'rgba(223, 81, 76, 0.2)'}`,
-                    }}>
-                      {trade.outcome}
-                    </span>
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '2px' }} onClick={e => e.stopPropagation()}>
-                      <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="var(--accent-color)">
-                        <Pencil size={13} />
-                      </ActionBtn>
-                      <ActionBtn onClick={() => onDelete(trade)} title="Delete trade" id={`btn-delete-${trade.id}`} color="var(--sell-red)">
-                        <Trash2 size={13} />
-                      </ActionBtn>
-                    </div>
-
-                    <div style={{ color: isExpanded ? 'var(--accent-color)' : 'var(--text-muted)', transition: 'color 0.2s' }}>
-                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Expandable Narrative Section */}
-                {isExpanded && (
-                  <div style={{ padding: '18px', background: 'var(--bg-primary)', animation: 'slideInDown 0.2s ease' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-                      <NarrativeBlock icon={<BookOpen size={13} />} label="Why This Trade?" content={trade.why_this_trade} color="var(--accent-color)" bg="var(--bg-secondary)" border="var(--border-color)" />
-                      <NarrativeBlock icon={<Brain size={13} />} label="Mindset & Psychology" content={trade.emotion_mindset} color="var(--accent-color)" bg="var(--bg-secondary)" border="var(--border-color)" />
-                      <NarrativeBlock icon={<ShieldAlert size={13} />} label="Improvements" content={trade.mistake_improve} color="var(--loss-red)" bg="var(--bg-secondary)" border="var(--border-color)" />
-                      {trade.screenshot && (
-                        <div style={{
-                          background: 'var(--bg-secondary)',
-                          border: '1.5px solid rgba(255, 87, 34, 0.25)',
-                          borderRadius: 'var(--radius-card)',
-                          padding: '14px 16px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '10px',
-                        }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--accent-color)' }}>
-                              <span>📸</span>
-                              <span style={{ fontSize: '10.5px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trade Screenshot</span>
-                            </div>
+                        <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                          {isExpanded ? <ChevronUp size={14} color="var(--accent-color)" /> : <ChevronDown size={14} />}
+                        </td>
+                        <td style={{ fontWeight: '800', color: 'var(--accent-color)' }}>
+                          Trade {tradeNumberMap[trade.id] || '—'}
+                        </td>
+                        <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                          <div>{trade.trade_date}</div>
+                          {trade.trade_time && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: '500' }}>{trade.trade_time}</div>}
+                        </td>
+                        <td>
+                          {trade.session && (
+                            <span style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--accent-color)', background: 'var(--accent-light)', padding: '2px 8px', borderRadius: '4px' }}>
+                              {trade.session}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: '600', color: trade.bias === 'Bullish' ? 'var(--win-green)' : trade.bias === 'Bearish' ? 'var(--loss-red)' : 'var(--text-secondary)' }}>
+                            {trade.bias || '—'}
+                          </div>
+                          {trade.key_level && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{trade.key_level}</div>}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '800', color: trade.key_level_tap === 'YES' ? 'var(--win-green)' : 'var(--loss-red)' }}>
+                            {trade.key_level_tap === 'YES' ? '✓' : '✗'}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '800', color: trade.cisd === 'YES' ? 'var(--win-green)' : 'var(--loss-red)' }}>
+                            {trade.cisd === 'YES' ? '✓' : '✗'}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={isBuy ? 'badge-buy' : 'badge-sell'}>
+                            {trade.direction}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                          ${trade.risk != null ? trade.risk.toFixed(2) : '0.00'}
+                        </td>
+                        <td style={{ textAlign: 'center', fontWeight: '600', color: 'var(--text-muted)' }}>
+                          {trade.rr_ratio || '1:1'}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={isWin ? 'badge-win' : 'badge-loss'}>
+                            {trade.outcome}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: '800', color: pnlColor }}>
+                          {trade.net_pnl > 0 ? '+' : ''}${trade.net_pnl.toFixed(2)}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {trade.screenshot ? (
                             <button
                               onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
                               style={{
-                                display: 'flex', alignItems: 'center', gap: '4px',
-                                fontSize: '10px', fontWeight: '700', color: 'var(--accent-color)',
-                                background: 'rgba(255, 87, 34, 0.08)', border: '1px solid rgba(255, 87, 34, 0.2)',
-                                borderRadius: '4px', padding: '3px 8px', cursor: 'pointer',
+                                border: 'none', background: 'var(--accent-light)',
+                                color: 'var(--accent-color)', borderRadius: '6px',
+                                padding: '4px 8px', cursor: 'pointer', display: 'inline-flex',
+                                alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700'
                               }}
+                              title="View saved screenshot"
                             >
-                              <ZoomIn size={10} /> Full View
+                              <ImageIcon size={12} /> View
                             </button>
+                          ) : (
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }} onClick={e => e.stopPropagation()}>
+                            <ActionBtn onClick={() => onEdit(trade)} title="Edit trade" id={`btn-edit-${trade.id}`} color="var(--accent-color)">
+                              <Pencil size={13} />
+                            </ActionBtn>
+                            <ActionBtn onClick={() => onDelete(trade)} title="Delete trade" id={`btn-delete-${trade.id}`} color="var(--sell-red)">
+                              <Trash2 size={13} />
+                            </ActionBtn>
                           </div>
-                          <img
-                            src={trade.screenshot}
-                            alt="Screenshot"
-                            loading="lazy"
-                            style={{
-                              width: '100%', maxHeight: '180px', objectFit: 'contain',
-                              borderRadius: '6px', border: '1px solid var(--border-color)',
-                              display: 'block', cursor: 'zoom-in', background: 'var(--bg-card)',
-                            }}
-                            onClick={(e) => { e.stopPropagation(); setLightboxScreenshot(trade.screenshot); }}
-                          />
-                        </div>
+                        </td>
+                      </tr>
+
+                      {/* Expandable Row Panel for Trade Narratives & Screenshot */}
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={14} style={{ background: 'var(--bg-primary)', padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                              <NarrativeBlock icon={<BookOpen size={13} />} label="Why This Trade?" content={trade.why_this_trade} color="var(--accent-color)" />
+                              <NarrativeBlock icon={<Brain size={13} />} label="Mindset & Psychology" content={trade.emotion_mindset} color="var(--accent-color)" />
+                              <NarrativeBlock icon={<ShieldAlert size={13} />} label="Improvements" content={trade.mistake_improve} color="var(--loss-red)" />
+                              {trade.screenshot && (
+                                <div style={{
+                                  background: 'var(--bg-card)',
+                                  border: '1px solid var(--border-color)',
+                                  borderRadius: '8px',
+                                  padding: '12px 14px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '8px',
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <span style={{ fontSize: '10.5px', fontWeight: '800', color: 'var(--accent-color)', textTransform: 'uppercase' }}>📸 Saved Screenshot</span>
+                                    <button
+                                      onClick={() => setLightboxScreenshot(trade.screenshot)}
+                                      style={{ background: 'var(--accent-light)', color: 'var(--accent-color)', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: '700', cursor: 'pointer' }}
+                                    >
+                                      Zoom
+                                    </button>
+                                  </div>
+                                  <img
+                                    src={trade.screenshot}
+                                    alt="Trade Screenshot"
+                                    loading="lazy"
+                                    style={{ width: '100%', maxHeight: '160px', objectFit: 'contain', borderRadius: '6px', cursor: 'zoom-in' }}
+                                    onClick={() => setLightboxScreenshot(trade.screenshot)}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {/* Footer & Pagination Controls */}
           <div style={{
-            padding: '14px 16px',
-            marginTop: '8px',
-            background: 'var(--bg-card)',
-            border: '1.5px solid var(--border-color)',
-            borderRadius: 'var(--radius-card)',
+            padding: '12px 16px',
+            background: 'var(--bg-secondary)',
+            borderTop: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -391,7 +343,7 @@ export default function TradeTable({ trades, onEdit, onDelete, loading, filters,
                   value={pageSize}
                   onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
                   style={{
-                    background: 'var(--bg-secondary)',
+                    background: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '4px',
@@ -454,11 +406,11 @@ function ActionBtn({ onClick, title, id, color, children }) {
       title={title}
       id={id}
       style={{
-        width: '30px',
-        height: '30px',
-        borderRadius: 'var(--radius-btn)',
+        width: '28px',
+        height: '28px',
+        borderRadius: '6px',
         background: 'transparent',
-        border: '1.5px solid var(--border-color)',
+        border: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -482,19 +434,19 @@ function ActionBtn({ onClick, title, id, color, children }) {
   );
 }
 
-function NarrativeBlock({ icon, label, content, color, bg, border }) {
+function NarrativeBlock({ icon, label, content, color }) {
   return (
     <div style={{
-      background: bg || 'var(--bg-secondary)',
-      border: `1.5px solid ${border || 'var(--border-color)'}`,
-      borderRadius: 'var(--radius-card)',
-      padding: '14px 16px',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-color)',
+      borderRadius: '8px',
+      padding: '12px 14px',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '9px', color }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color }}>
         {icon}
-        <span style={{ fontSize: '10.5px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
+        <span style={{ fontSize: '10.5px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
       </div>
-      <p style={{ fontSize: '12.5px', color: 'var(--text-primary)', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+      <p style={{ fontSize: '12px', color: 'var(--text-primary)', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
         {content || 'No notes logged.'}
       </p>
     </div>
