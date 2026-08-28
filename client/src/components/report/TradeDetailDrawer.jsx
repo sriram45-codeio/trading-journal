@@ -199,8 +199,15 @@ export default function TradeDetailDrawer({ trade, tradeNumber, onClose, onEdit,
             </div>
           </div>
         ) : (
-          <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-primary)' }}>
-            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontStyle: 'italic' }}>No screenshot attached for this trade log.</span>
+          <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border-color)', background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '12px', color: '#b45309', fontWeight: '600' }}>No screenshot uploaded for Trade #{tradeNumber || trade.id} yet.</span>
+            <button
+              onClick={() => { onEdit(trade); onClose(); }}
+              className="kite-btn kite-btn-blue"
+              style={{ padding: '5px 12px', fontSize: '11.5px' }}
+            >
+              ➕ Add Screenshot
+            </button>
           </div>
         )}
 
